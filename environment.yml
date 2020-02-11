@@ -1,0 +1,27 @@
+# To create this environment:
+# conda env create -f environment.yml
+# and to use it:
+# conda activate fgrl
+name: fgrl
+dependencies:
+    - python=3.6
+    - numpy
+    - matplotlib
+    - jupyter
+    - scipy
+    - tensorflow-gpu=1.14.0
+    - pyzmq
+    - pybind11
+    # format with black before committing:
+    - black
+    # optional, for IDE tooling:
+    - pylint
+    - rope
+    # required for non-conda dependencies
+    - pip
+    - pip:
+        - opencv-python
+        - stable-baselines
+        - transforms3d
+        - sophuspy
+        - yacs
