@@ -1,0 +1,42 @@
+{% set name = "rl_navigation" %}
+{% set version = "0.0.1" %}
+
+package:
+  name: "{{ name|lower }}"
+  version: "{{ version }}"
+
+source:
+  path: src/rl_navigation
+
+build:
+  entry_points:
+    - rl_navigation: rl_navigation._cli_tool:main
+  script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv "
+
+requirements:
+  build:
+    - pip
+    - wheel
+    - ninja
+    - meson
+  run:
+    - python
+    - numpy
+    - matplotlib
+    - jupyter
+    - scipy
+    - tensorflow-gpu=1.14.0
+    - pyzmq
+    - pybind11
+    - black
+    - pip
+    - pip:
+        - opencv-python
+        - stable-baselines
+        - transforms3d
+        - sophuspy
+        - yacs
+
+test:
+  requires:
+    - pytest
