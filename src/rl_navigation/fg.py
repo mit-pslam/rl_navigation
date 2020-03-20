@@ -140,18 +140,12 @@ class DroneState:
             rot = R.from_euler("xyz", [0, 0, 0])
         if action == DiscreteActions.TURN_LEFT:
             pos = np.array([0, 0, 0])
-            rot = R.from_euler(
-                "xyz", [0, -np.deg2rad(DiscreteActions.TURN_AMT), 0]
-            )  # LHS
+            rot = R.from_euler("xyz", [0, -np.deg2rad(DiscreteActions.TURN_AMT), 0])  # LHS
         if action == DiscreteActions.TURN_RIGHT:
             pos = np.array([0, 0, 0])
-            rot = R.from_euler(
-                "xyz", [0, np.deg2rad(DiscreteActions.TURN_AMT), 0]
-            )  # LHS
+            rot = R.from_euler("xyz", [0, np.deg2rad(DiscreteActions.TURN_AMT), 0])  # LHS
 
-        T_ti_tj__unity = transforms3d.affines.compose(
-            T=pos, R=rot.as_dcm(), Z=self.no_zoom
-        )
+        T_ti_tj__unity = transforms3d.affines.compose(T=pos, R=rot.as_dcm(), Z=self.no_zoom)
 
         # TODO(MMAZ) should be a safe read of _T__world_from_agent__unity, this method and
         # self.reset() are the only ones to modify state
@@ -436,11 +430,7 @@ class FlightGogglesHeadingEnv(GymEnv):
         agent_next_position = next_state[0:3, 3]
 
         dd, ii = self.drone_state._tree.query(
-            (
-                agent_current_position[0],
-                agent_current_position[1],
-                agent_current_position[2],
-            )
+            (agent_current_position[0], agent_current_position[1], agent_current_position[2],)
         )
 
         # self.ii_queue.append(ii)
@@ -454,20 +444,12 @@ class FlightGogglesHeadingEnv(GymEnv):
 
         # projection of current agent position onto ideal loop
         loop_current_position = np.array(
-            [
-                self.drone_state.x_new[ii],
-                self.drone_state.y_new[ii],
-                self.drone_state.z_new[ii],
-            ]
+            [self.drone_state.x_new[ii], self.drone_state.y_new[ii], self.drone_state.z_new[ii],]
         )
         # the +1 moves it to the next point on the parametric curve, the sampling interval mods it by 1000
         jj = (ii + 1) % self.drone_state._SAMPLING_INTERVAL
         loop_next_position = np.array(
-            [
-                self.drone_state.x_new[jj],
-                self.drone_state.y_new[jj],
-                self.drone_state.z_new[jj],
-            ]
+            [self.drone_state.x_new[jj], self.drone_state.y_new[jj], self.drone_state.z_new[jj],]
         )
 
         v_agent_heading = agent_next_position - agent_current_position
@@ -504,10 +486,7 @@ class FlightGogglesHeadingEnv(GymEnv):
         return result
 
     def step(self, action):
-        assert self.action_space.contains(action), "%r (%s) invalid" % (
-            action,
-            type(action),
-        )
+        assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action),)
 
         if self.done:
             logger.warn("You are calling 'step()' after done=True")

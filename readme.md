@@ -7,7 +7,7 @@ This repository contains experiments for training trajectory-following and obsta
 Anaconda is recommended:
 
 ```bash
-conda env create -f environment.yml
+conda env create -f resources/environment.yml
 ```
 
 ### Training

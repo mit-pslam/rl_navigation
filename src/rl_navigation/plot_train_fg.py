@@ -73,13 +73,16 @@ def sock(q):
     socket.close()
     context.term()
 
+
 fmt_report = """Reward: {:06.3f}
 Distance {:06.3f}
 Angle {:06.3f}
 u: {:04d}"""
 
+
 def mktext(reward=0, dist=0, angle=0, ii=0):
     return fmt_report.format(reward, dist, angle, ii)
+
 
 if __name__ == "__main__":
     _SMOOTH = 1.5
@@ -116,7 +119,7 @@ if __name__ == "__main__":
     s = threading.Thread(target=sock, args=(mq,), daemon=True)
     s.start()
 
-    graph, = ax.plot(xdata, ydata, zdata, linestyle="", marker="o", color=(0, 0, 1, 0.1))
+    (graph,) = ax.plot(xdata, ydata, zdata, linestyle="", marker="o", color=(0, 0, 1, 0.1))
 
     # https://matplotlib.org/examples/animation/subplots.html
 
@@ -129,10 +132,9 @@ if __name__ == "__main__":
     xagent, yagent, zagent = [], [], []
 
     # NOTE: the , is critical!!!
-    dist_line, = ax.plot(xline, yline, zline, linestyle=":", color="r", linewidth=2)
-    ideal_line, = ax.plot(xideal, yideal, zideal, linestyle="-", color=(1,0,1), linewidth=2)
-    agent_line, = ax.plot(xagent, yagent, zagent, linestyle="-", color=(0,0,1), linewidth=2)
-
+    (dist_line,) = ax.plot(xline, yline, zline, linestyle=":", color="r", linewidth=2)
+    (ideal_line,) = ax.plot(xideal, yideal, zideal, linestyle="-", color=(1, 0, 1), linewidth=2)
+    (agent_line,) = ax.plot(xagent, yagent, zagent, linestyle="-", color=(0, 0, 1), linewidth=2)
 
     # https://stackoverflow.com/questions/18274137/how-to-animate-text-in-matplotlib
 
@@ -162,18 +164,22 @@ if __name__ == "__main__":
             #     float(msg["z"]),
             #     float(msg["reward"]),
             # )
-            agent_current_position = np.array(msg['agent_current_pos'])
-            agent_next_position = np.array(msg['agent_next_pos'])
-            loop_current_pos = np.array(msg['ideal_current_pos'])
-            loop_next_pos = np.array(msg['ideal_next_pos'])
-            reward = msg['loop_reward']
-            heading_angle = np.rad2deg(msg['heading_angle'])
-            ii = msg['ii']
+            agent_current_position = np.array(msg["agent_current_pos"])
+            agent_next_position = np.array(msg["agent_next_pos"])
+            loop_current_pos = np.array(msg["ideal_current_pos"])
+            loop_next_pos = np.array(msg["ideal_next_pos"])
+            reward = msg["loop_reward"]
+            heading_angle = np.rad2deg(msg["heading_angle"])
+            ii = msg["ii"]
 
-            x,y,z = agent_current_position[0], agent_current_position[1], agent_current_position[2]
+            x, y, z = (
+                agent_current_position[0],
+                agent_current_position[1],
+                agent_current_position[2],
+            )
 
             # convert to ROS
-            # ROS: x, y, z = UNITY: z, -x, y 
+            # ROS: x, y, z = UNITY: z, -x, y
             xdata.append(z)
             ydata.append(-x)
             zdata.append(y)
