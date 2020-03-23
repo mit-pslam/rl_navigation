@@ -7,7 +7,25 @@ This repository contains experiments for training trajectory-following and obsta
 Anaconda is recommended:
 
 ```bash
-conda env create -f resources/environment.yml
+conda install conda-build
+conda create -n fgrl --python=3.7
+cd /to/some/desired/directory
+git clone git@github.mit.edu/aiia-suav-distaster-response/rl_navigation
+cd rl_navigation
+conda build conda.recipes && conda install -n fgrl --use-local --force-reinstall -y rl_navigation
+```
+
+You can also do this with pip and python3.7.  You may need to add the deadsnakes ppa for this.
+
+**WARNING: Do not mix and match these methods.**
+
+```bash
+sudo apt install python3.7*
+python3.7 -m venv /path/to/environment
+source /path/to/environment/bin/activate
+cd /to/some/desired/directory
+git clone git@github.mit.edu/aiia-suav-distaster-response/rl_navigation
+pip install -e rl_navigation
 ```
 
 ### Training
