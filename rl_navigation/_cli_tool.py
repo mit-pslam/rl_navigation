@@ -1,6 +1,5 @@
 """Module handling all the command line options."""
 import rl_navigation
-import rl_navigation.subcommands.config as rlnav_config
 import rl_navigation.subcommands.train as rlnav_train
 import rl_navigation.subcommands.plot as rlnav_plot
 import argparse
@@ -16,12 +15,6 @@ class ArgumentDispatcher:
     def __call__(self, args):
         """Run the target functions."""
         self.target_func(**vars(args))
-
-
-def make_config_subparser(subparsers):
-    """Make a subparser for configuring training setup."""
-    config_parser = subparsers.add_parser("config", help="configure training")
-    config_parser.set_defaults(func=ArgumentDispatcher(rlnav_config.run_config))
 
 
 def make_train_subparser(subparsers):
@@ -48,7 +41,6 @@ def main():
     )
 
     subparsers = parser.add_subparsers(help="sub-command help", dest="subparser_name")
-    make_config_subparser(subparsers)
     make_train_subparser(subparsers)
     make_plot_subparser(subparsers)
 

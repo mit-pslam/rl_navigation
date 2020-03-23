@@ -2,7 +2,7 @@
 from setuptools import setup
 import versioneer
 
-requirements = ["numpy"]
+requirements = ["numpy", "stable-baselines"]
 doc_requirements = ["sphinx", "sphinx_rtd_theme"]
 test_requirements = ["pytest", "pytest-cov", "coverage"]
 
