@@ -2,9 +2,9 @@
 from setuptools import setup
 import versioneer
 
-requirements = [
-    "numpy",
-]
+requirements = ["numpy"]
+doc_requirements = ["sphinx", "sphinx_rtd_theme"]
+test_requirements = ["pytest", "pytest-cov", "coverage"]
 
 setup(
     name="rl_navigation",
@@ -18,4 +18,5 @@ setup(
     entry_points={"console_scripts": ["rl_navigation=rl_navigation._cli_tool:main"]},
     install_requires=requirements,
     classifiers=["Porgramming Language :: Python :: 3.7"],
+    extras_require={"doc": doc_requirements, "test": test_requirements},
 )

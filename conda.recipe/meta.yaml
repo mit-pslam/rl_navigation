@@ -9,7 +9,7 @@ source:
   path: ..
 
 build:
-  script: {{ PYTHON }} -m pip install --no-deps --ignore-installed -vv .
+  script: {{ PYTHON }} -m pip install --no-deps --ignore-installed .
 
   entry_points:
     {% for entry in data['entry_points']['console_scripts'] %}
@@ -23,6 +23,12 @@ requirements:
   run:
     - python
     {% for dep in data['install_requires'] %}
+    - {{ dep.lower() }}
+    {% endfor %}
+    {% for dep in data['extras_require']['test'] %}
+    - {{ dep.lower() }}
+    {% endfor %}
+    {% for dep in data['extras_require']['doc'] %}
     - {{ dep.lower() }}
     {% endfor %}
 
