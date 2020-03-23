@@ -1,0 +1,2 @@
+include versioneer.py
+include src/rl_navigation/_version.py

@@ -4,7 +4,7 @@ import versioneer
 
 requirements = ["numpy", "stable-baselines"]
 doc_requirements = ["sphinx", "sphinx_rtd_theme"]
-test_requirements = ["pytest", "pytest-cov", "coverage"]
+test_requirements = ["tox"]
 
 setup(
     name="rl_navigation",
@@ -14,6 +14,7 @@ setup(
     license="TBD",
     author="Mark Mazumder",
     python_requires=">=3.7",
+    package_dir={"": "src"},
     packages=["rl_navigation", "rl_navigation.subcommands"],
     entry_points={"console_scripts": ["rl_navigation=rl_navigation._cli_tool:main"]},
     install_requires=requirements,
