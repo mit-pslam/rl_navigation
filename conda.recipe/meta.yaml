@@ -1,42 +1,40 @@
-{% set name = "rl_navigation" %}
-{% set version = "0.0.1" %}
+
+{% set data = load_setup_py_data() %}
 
 package:
-  name: "{{ name|lower }}"
-  version: "{{ version }}"
+  name: rl_navigation
+  version: {{ data['version'] }}
 
 source:
-  path: src/rl_navigation
+  path: ..
 
 build:
+  script: {{ PYTHON }} -m pip install --no-deps --ignore-installed -vv .
+
   entry_points:
-    - rl_navigation: rl_navigation._cli_tool:main
-  script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv "
+    {% for entry in data['entry_points']['console_scripts'] %}
+      - {{ entry.split('=')[0].strip() }} = {{ entry.split('=')[1].strip() }}
+    {% endfor %}
 
 requirements:
-  build:
+  host:
+    - python
     - pip
-    - wheel
-    - ninja
-    - meson
   run:
     - python
-    - numpy
-    - matplotlib
-    - jupyter
-    - scipy
-    - tensorflow-gpu=1.14.0
-    - pyzmq
-    - pybind11
-    - black
-    - pip
-    - pip:
-        - opencv-python
-        - stable-baselines
-        - transforms3d
-        - sophuspy
-        - yacs
+    {% for dep in data['install_requires'] %}
+    - {{ dep.lower() }}
+    {% endfor %}
 
 test:
+  source_files:
+    - tests
   requires:
     - pytest
+    - pytest-cov
+  commands:
+    - pytest tests
+
+about:
+  home: https://github.mit.edu/aiia-suas-disaster-response/rl_navigation
+  summary: Training pipeline for RL policies utilizing FlightGoggles for simulation
