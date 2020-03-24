@@ -2,6 +2,7 @@
 import rl_navigation._cli_tool as cli_tool
 import rl_navigation.subcommands.train as rlnav_train
 import rl_navigation.subcommands.plot as rlnav_plot
+import rl_navigation.subcommands.video as rlnav_video
 from unittest import mock
 import inspect
 import sys
@@ -34,6 +35,16 @@ def test_plot_arguments():
     """Test that the plot cli argument match what run_plot expects."""
     expected_args = inspect.signature(rlnav_plot.run_plot)
     with mock.patch("rl_navigation.subcommands.plot.run_plot") as func_mock:
+        cli_tool.main()
+        assert func_mock.called
+        compare_args(func_mock, expected_args)
+
+
+@mock.patch.object(sys, "argv", ["rl_navigation", "video", "some_fake_policy_file"])
+def test_video_arguments():
+    """Test that the video cli argument match what run_video expects."""
+    expected_args = inspect.signature(rlnav_video.run_video)
+    with mock.patch("rl_navigation.subcommands.video.run_video") as func_mock:
         cli_tool.main()
         assert func_mock.called
         compare_args(func_mock, expected_args)

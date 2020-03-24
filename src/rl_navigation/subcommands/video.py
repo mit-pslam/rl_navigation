@@ -1,8 +1,7 @@
-"""Module to handle training a policy."""
+"""Module to handle creating video."""
 from rl_navigation.fg import FlightGogglesHeadingEnv
 from rl_navigation.config import get_cfg_defaults
 
-import stable_baselines.common.policies as stb_policies
 import stable_baselines.common.vec_env as stb_env
 from stable_baselines import PPO2
 
@@ -23,37 +22,38 @@ def make_unity_env(config, num_env):
     return stb_env.DummyVecEnv([make_env(i) for i in range(num_env)])
 
 
-def run_train(
+def run_video(
+    input_model: str,
     configuration_file: Optional[str] = None,
-    quiet: bool = True,
-    input_model: Optional[str] = None,
+    video_length: int = 6000,
+    output_directory: str = "videos",
     output_prefix: str = "",
     **kwargs
 ):
-    """Run training for a policy."""
+    """Make a video from the results."""
     cfg = get_cfg_defaults()
 
     if configuration_file is not None:
         cfg.merge_from_file(configuration_file)
+
     cfg.freeze()
 
     env = make_unity_env(cfg, 1)
 
-    model = PPO2(
-        stb_policies.CnnLstmPolicy,
-        env,
-        gamma=cfg.TRAINING.HYP_GAMMA,
-        verbose=1,
-        nminibatches=cfg.TRAINING.HYP_MINIBATCHES,
-        tensorboard_log="./tensorboard/",
-    )
+    model = PPO2.load(input_model)
 
-    if input_model is not None:
-        model.load(input_model)
-
-    model.learn(total_timesteps=cfg.TRAINING.TOTAL_TIMESTEPS)
-
-    output = "{}_{}.policy".format(
+    name_prefix = "{}_{}".format(
         output_prefix, datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     )
-    model.save(output)
+    video_env = stb_env.VecVideoRecorder(
+        env,
+        video_folder=output_directory,
+        record_video_trigger=lambda x: x == 0,
+        video_length=video_length,
+        name_prefix=name_prefix,
+    )
+
+    obs = video_env.reset()
+    for _ in range(video_length + 1):
+        action, _ = model.predict(obs)
+        obs, _, _, _ = video_env.step(action)
