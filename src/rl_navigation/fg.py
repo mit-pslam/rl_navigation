@@ -1,5 +1,6 @@
 """Module that handles making a gym environment for training."""
 import rl_navigation.fg_msgs as fg_msgs
+import rl_navigation.math_utilities as math_utils
 
 import atexit
 import numpy as np
@@ -349,34 +350,6 @@ def drive(stdscr, drone_state):
         # stdscr.refresh()
 
 
-def unit_vector(vector):
-    """
-    Return the unit vector of the vector.
-
-    source: https://stackoverflow.com/a/13849249
-    """
-    return vector / np.linalg.norm(vector)
-
-
-def angle_between_vectors(v1, v2):
-    """
-    Return the angle in radians between vectors 'v1' and 'v2'.
-
-    Examples::
-
-            >>> angle_between((1, 0, 0), (0, 1, 0))
-            1.5707963267948966
-            >>> angle_between((1, 0, 0), (1, 0, 0))
-            0.0
-            >>> angle_between((1, 0, 0), (-1, 0, 0))
-            3.141592653589793
-        source: https://stackoverflow.com/a/13849249
-    """
-    v1_u = unit_vector(v1)
-    v2_u = unit_vector(v2)
-    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
-
-
 class FlightGogglesHeadingEnv(GymEnv):
     """Gym environment for Flight Goggles."""
 
@@ -489,7 +462,7 @@ class FlightGogglesHeadingEnv(GymEnv):
         v_agent_heading = agent_next_position - agent_current_position
         v_ideal_heading = loop_next_position - loop_current_position
 
-        angle_between = angle_between_vectors(v_agent_heading, v_ideal_heading)
+        angle_between = math_utils.angle_between_vectors(v_agent_heading, v_ideal_heading)
 
         # minimize angle between agent heading and ideal loop heading
         # TODO(MMAZ): normalize or weight rewards to be between -/+ 1

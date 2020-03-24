@@ -1,6 +1,7 @@
 """Run a single, default test."""
 import rl_navigation._cli_tool as cli_tool
 import rl_navigation.subcommands.train as rlnav_train
+import rl_navigation.subcommands.plot as rlnav_plot
 from unittest import mock
 import inspect
 import sys
@@ -23,6 +24,16 @@ def test_train_arguments():
     """Test that the train cli argument match what run_train expects."""
     expected_args = inspect.signature(rlnav_train.run_train)
     with mock.patch("rl_navigation.subcommands.train.run_train") as func_mock:
+        cli_tool.main()
+        assert func_mock.called
+        compare_args(func_mock, expected_args)
+
+
+@mock.patch.object(sys, "argv", ["rl_navigation", "plot"])
+def test_plot_arguments():
+    """Test that the plot cli argument match what run_plot expects."""
+    expected_args = inspect.signature(rlnav_plot.run_plot)
+    with mock.patch("rl_navigation.subcommands.plot.run_plot") as func_mock:
         cli_tool.main()
         assert func_mock.called
         compare_args(func_mock, expected_args)
