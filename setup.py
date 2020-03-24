@@ -1,6 +1,27 @@
 """Setuptools description for the rl_navigation packages."""
 from setuptools import setup
+#  from setuptools.commands.build_ext import build_ext
 import versioneer
+
+
+#  class BuildMesonExtenstions(build_ext):
+    #  """A custom build extension for adding compiler-specific options."""
+
+    #  def build_extensions(self):
+        #  ct = self.compiler.compiler_type
+        #  opts = self.c_opts.get(ct, [])
+        #  link_opts = self.l_opts.get(ct, [])
+        #  if ct == "unix":
+            #  opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
+            #  opts.append(cpp_flag(self.compiler))
+            #  if has_flag(self.compiler, "-fvisibility=hidden"):
+                #  opts.append("-fvisibility=hidden")
+        #  elif ct == "msvc":
+            #  opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
+        #  for ext in self.extensions:
+            #  ext.extra_compile_args = opts
+            #  ext.extra_link_args = link_opts
+        #  build_ext.build_extensions(self)
 
 
 setup(
@@ -27,6 +48,6 @@ setup(
     extras_require={
         "doc": ["sphinx", "sphinx_rtd_theme"],
         "test": ["tox"],
-        "gpu": ["tesnorflow-gpu<2"],
+        "gpu": ["tensorflow-gpu<2"],
     },
 )
