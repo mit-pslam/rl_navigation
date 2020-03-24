@@ -1,3 +1,4 @@
+"""Messages to transmit to and from FG."""
 import json
 import cv2
 import numpy as np
@@ -7,13 +8,19 @@ HEIGHT = 256
 
 
 class Landmark:
+    """Location of landmark in the simulator."""
+
     def __init__(self, j):
+        """Make a landmark."""
         self.ID = j["ID"]  # string
         self.position = j["position"]  # list[double]
 
 
 class RenderMetadata:
+    """Render information."""
+
     def __init__(self, j):
+        """Make render information."""
         self.ntime = j["ntime"]  # np.int64
         self.camWidth = j["camWidth"]  # int
         self.camHeight = j["camHeight"]  # int
@@ -26,8 +33,10 @@ class RenderMetadata:
 
 
 class RenderOutput:
-    def __init__(self, msg):
+    """Render output."""
 
+    def __init__(self, msg):
+        """Make render output."""
         # flightgoggles returns a multipart message:
         # https://pyzmq.readthedocs.io/en/latest/api/zmq.html#zmq.Socket.recv_multipart
         # https://netmq.readthedocs.io/en/latest/message/#creating-multipart-messages
@@ -63,7 +72,10 @@ class RenderOutput:
 
 
 class Camera:
+    """Camera information."""
+
     def __init__(self, position, rotation, camera_id="Camera_RGB_left"):
+        """Make camera information."""
         self.ID = camera_id
         # flightgoggles_ros_bridge/src/Common/jsonMessageSpec.hpp
         # Position and rotation use Unity left-handed coordinates.
@@ -79,6 +91,7 @@ class Camera:
         self.doesLandmarkVisCheck = True
 
     def asJsonDict(self):
+        """Make json object from camera."""
         j = {
             "ID": self.ID,
             "position": self.position.tolist(),
@@ -93,7 +106,10 @@ class Camera:
 
 
 class State:
+    """State information."""
+
     def __init__(self, ntime, cameras, objects=[]):
+        """Make state of FG."""
         # flightgoggles_ros_bridge/src/ROSClient/ROSClient.hpp
         self.sceneIsInternal = True
         self.sceneFilename = "Abandoned_Factory_Morning"
@@ -107,6 +123,7 @@ class State:
         self.objects = objects
 
     def asJsonDict(self):
+        """Make dictionary of FG state."""
         j = {
             "sceneIsInternal": self.sceneIsInternal,
             "sceneFilename": self.sceneFilename,

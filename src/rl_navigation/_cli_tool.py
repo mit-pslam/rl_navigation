@@ -14,12 +14,37 @@ class ArgumentDispatcher:
 
     def __call__(self, args):
         """Run the target functions."""
-        self.target_func(**vars(args))
+        self.target_function(**vars(args))
 
 
 def make_train_subparser(subparsers):
     """Make a subparser for training."""
     train_parser = subparsers.add_parser("train", help="run training")
+    train_parser.add_argument(
+        "--configuration_file",
+        "-c",
+        default=None,
+        nargs="?",
+        help="configuration file to use to override default values.",
+    )
+    train_parser.add_argument(
+        "--quiet", "-q", action="store_true", help="don't show verbose output from training."
+    )
+    train_parser.add_argument(
+        "--input_model",
+        "-i",
+        default=None,
+        nargs="?",
+        help="input model weights to seed training with.",
+    )
+    train_parser.add_argument(
+        "--output_prefix",
+        "-o",
+        default="",
+        nargs="?",
+        type=str,
+        help="prefix to use when outputting the trained model.",
+    )
     train_parser.set_defaults(func=ArgumentDispatcher(rlnav_train.run_train))
 
 

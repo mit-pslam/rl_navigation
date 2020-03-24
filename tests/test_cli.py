@@ -6,7 +6,7 @@ import inspect
 import sys
 
 
-def compare_args(mock_function, expected_args, num_extra=2):
+def compare_args(mock_function, expected_args, num_extra=1):
     """Make sure that all necessary args are covered by the CLI."""
     dispatch_args = [arg for arg in mock_function.call_args[1]]
 

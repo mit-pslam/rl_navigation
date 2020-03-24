@@ -1,10 +1,11 @@
 """Module to handle training a policy."""
+from rl_navigation.fg import FlightGogglesHeadingEnv
+from rl_navigation.config import get_cfg_defaults
+
 import stable_baselines.common.policies as stb_policies
 import stable_baselines.common.vec_env as stb_env
 from stable_baselines import PPO2
 
-from fg import FlightGogglesHeadingEnv
-from config import get_cfg_defaults
 from typing import Optional
 import datetime
 
@@ -27,6 +28,7 @@ def run_train(
     quiet: bool = True,
     input_model: Optional[str] = None,
     output_prefix: str = "",
+    **kwargs
 ):
     """Run training for a policy."""
     cfg = get_cfg_defaults()
