@@ -17,32 +17,21 @@ git clone git@github.mit.edu/aiia-suav-distaster-response/rl_navigation
 pip install rl_navigation
 ```
 
-### Training
+## Interaction
 
-[Create an `experiment.yml` file using `yacs`](https://github.com/rbgirshick/yacs#usage) (you will need to call `cfg.merge_from_file("experiment.yml")` in `fgtrain.py`) or edit `config.py` and specify the location of your FlightGoggles binary:
-
-```yaml
-_C.FLIGHTGOGGLES.BINARY = "/path/to/FlightGoggles.x86_64"
-```
-
-Then, activate your conda environment and start training:
+Once installed (and the environment you used is active), you should be able to use the command line interface:
 
 ```bash
-$ conda activate fgrl
-(fgrl) python fgtrain.py
+rl_navigation -h
 ```
 
-If you want to view the agent's performance in realtime, then in a second terminal run:
+You have a few options
 
 ```bash
-$ conda activate fgrl
-(fgrl) python plot_train_fg.py
+rl_navigation train  # train a model
+rl_navigation plot   # show what's going on during training
+rl_navigation movie  # export the result of running a policy as a movie
 ```
-
-You should see the following output:
-
-![](doc/fgrl.gif)
-
 
 ## Next steps
 
