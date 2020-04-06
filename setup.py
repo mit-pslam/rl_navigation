@@ -18,18 +18,23 @@ class BuildMesonExtenstions(build_ext):
         binding_directory = (
             pathlib.Path(__file__).parent.absolute() / "src" / "bindings"
         )
-        build_dir = pathlib.Path(".").absolute() / self.build_temp
-        subprocess.run(
+        build_dir = self.build_temp
+        ret = subprocess.run(
             [
                 "meson",
                 "setup",
-                "--wipe",
                 build_dir,
+                str(binding_directory),
                 "-Dinterperter_path={}".format(interperter),
                 "-Dbuild_result_path={}".format(install_path),
-            ],
-            cwd=str(binding_directory),
+            ], capture_output=True, encoding='utf-8'
         )
+
+        if ret.returncode != 0:
+            print("Meson out: {}".format(ret.stdout))
+            print("Meson error: {}".format(ret.stderr))
+            sys.exit(1)
+
         subprocess.run(["ninja", "install"], cwd=build_dir)
 
 
