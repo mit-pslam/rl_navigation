@@ -1,4 +1,4 @@
-option('python_install_path', type : 'string',
-       description : 'path to install python modules at')
-option('python_interperter_path', type : 'string',
-       description : 'path to the interpreter to install to')
+option('build_result_path', type : 'string',
+       description : 'path to temporarily install python modules to')
+option('interperter_path', type : 'string',
+       description : 'python interperter path')

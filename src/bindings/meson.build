@@ -5,38 +5,20 @@ pybind11_project = subproject('pybind11')
 pybind11_dep = pybind11_project.get_variable('pybind11_dep')
 
 cmake = import('cmake')
+sophus_project = cmake.subproject('sophus', cmake_options: ['-DBUILD_TESTS=OFF', '-DBUILD_EXAMPLES=OFF'])
+sophus_dep = sophus_project.dependency('sophus')
+
 eigen_dep = dependency('Eigen3', method: 'cmake', modules: ['Eigen3::Eigen'])
 thread_dep = dependency('threads')
 
-py_install_dir_script = files('scripts/detect_python_install_dir.py')
-
-subdir('bindings')
+build_result_path = get_option('build_result_path')
+interperter_path = get_option('interperter_path')
 
 pymod = import('python')
 
-use_user_sitepackages = get_option('use_user_sitepackages')
-python_interp_path = get_option('python_interp_path')
-
-if use_user_sitepackages and python_interp_path != ''
-  error('cannot specify user sitepackages install path and an alternative interpreter')
-endif
-
-if python_interp_path == ''
-  py = pymod.find_installation('python3')
-  install_interp = find_program('python3')
-else
-  py = pymod.find_installation(python_interp_path)
-  install_interp = find_program(python_interp_path)
-endif
+py = pymod.find_installation(interperter_path)
+install_interp = find_program(interperter_path)
 
 py_dep = py.dependency()
-
-if use_user_sitepackages
-  ret = run_command(install_interp, py_install_dir_script, '--user', check : true)
-else
-  ret = run_command(install_interp, py_install_dir_script, check : true)
-endif
-
-py_install_dir = ret.stdout().strip()
 
 subdir('sophus')

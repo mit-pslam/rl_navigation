@@ -1,33 +1,42 @@
 """Setuptools description for the rl_navigation packages."""
-from setuptools import setup
-#  from setuptools.commands.build_ext import build_ext
+from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
+import subprocess
 import versioneer
+import pathlib
+import tempfile
+import sys
+import os
 
 
-#  class BuildMesonExtenstions(build_ext):
-    #  """A custom build extension for adding compiler-specific options."""
+class BuildMesonExtenstions(build_ext):
+    """A custom build extension for adding compiler-specific options."""
 
-    #  def build_extensions(self):
-        #  ct = self.compiler.compiler_type
-        #  opts = self.c_opts.get(ct, [])
-        #  link_opts = self.l_opts.get(ct, [])
-        #  if ct == "unix":
-            #  opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
-            #  opts.append(cpp_flag(self.compiler))
-            #  if has_flag(self.compiler, "-fvisibility=hidden"):
-                #  opts.append("-fvisibility=hidden")
-        #  elif ct == "msvc":
-            #  opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
-        #  for ext in self.extensions:
-            #  ext.extra_compile_args = opts
-            #  ext.extra_link_args = link_opts
-        #  build_ext.build_extensions(self)
+    def build_extensions(self):
+        interperter = str(sys.executable)
+        install_path = pathlib.Path(".").absolute() / self.build_lib
+        binding_directory = (
+            pathlib.Path(__file__).parent.absolute() / "src" / "bindings"
+        )
+        build_dir = pathlib.Path(".").absolute() / self.build_temp
+        subprocess.run(
+            [
+                "meson",
+                "setup",
+                "--wipe",
+                build_dir,
+                "-Dinterperter_path={}".format(interperter),
+                "-Dbuild_result_path={}".format(install_path),
+            ],
+            cwd=str(binding_directory),
+        )
+        subprocess.run(["ninja", "install"], cwd=build_dir)
 
 
 setup(
     name="rl_navigation",
     version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    cmdclass=dict(versioneer.get_cmdclass(), **{"build_ext": BuildMesonExtenstions}),
     description="package that contains code to train RL-policies in a FlightGoggles enviornment",
     license="TBD",
     author="Mark Mazumder",
@@ -35,6 +44,7 @@ setup(
     package_dir={"": "src"},
     packages=["rl_navigation", "rl_navigation.subcommands"],
     entry_points={"console_scripts": ["rl_navigation=rl_navigation._cli_tool:main"]},
+    ext_modules=[Extension("sophus", [])],
     install_requires=[
         "numpy",
         "stable-baselines",
