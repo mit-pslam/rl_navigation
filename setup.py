@@ -15,9 +15,12 @@ class BuildMesonExtenstions(build_ext):
     def build_extensions(self):
         interperter = str(sys.executable)
         install_path = pathlib.Path(".").absolute() / self.build_lib
-        binding_directory = (
-            pathlib.Path(__file__).parent.absolute() / "src" / "bindings"
-        )
+        binding_directory = pathlib.Path("src") / "bindings"
+        print(binding_directory)
+        print(pathlib.Path(".").absolute())
+        print(list(pathlib.Path(".").iterdir()))
+        print(list((pathlib.Path(".") / "src").iterdir()))
+
         build_dir = self.build_temp
         ret = subprocess.run(
             [

@@ -16,7 +16,7 @@ from scipy.spatial.transform import Rotation as R
 from scipy import interpolate
 from scipy.spatial import cKDTree
 import transforms3d
-#  import sophus as sp
+import sophus as sp
 
 import queue
 
