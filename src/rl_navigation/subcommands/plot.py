@@ -1,5 +1,6 @@
 """Module to plot training progress."""
 import rl_navigation.math_utilities as math_utils
+from rl_navigation.config import get_cfg_defaults
 import numpy as np
 import zmq
 
@@ -15,6 +16,7 @@ from scipy.spatial import cKDTree
 import threading
 import queue
 from collections import deque
+from typing import Optional
 
 
 def sock(q):
@@ -54,11 +56,18 @@ def mktext(reward=0, dist=0, angle=0, ii=0):
     return fmt_report.format(reward, dist, angle, ii)
 
 
-def run_plot(**kwargs):
+def run_plot(configuration_file: Optional[str] = None, **kwargs):
     """Plot training progress."""
+
+    cfg = get_cfg_defaults()
+
+    if configuration_file is not None:
+        cfg.merge_from_file(configuration_file)
+    cfg.freeze()
+
     _SMOOTH = 1.5
     _SAMPLING_INTERVAL = 1000
-    ideal__unity = np.load("data_reward_fg__unity.npy")
+    ideal__unity = np.load(cfg.INITIAL_CONDITIONS.IDEAL_CURVE)
     tck, u = interpolate.splprep(ideal__unity.T, s=_SMOOTH, per=1)
     u_new = np.linspace(u.min(), u.max(), _SAMPLING_INTERVAL)
     x_new, y_new, z_new = interpolate.splev(u_new, tck, der=0)
@@ -90,7 +99,9 @@ def run_plot(**kwargs):
     s = threading.Thread(target=sock, args=(mq,), daemon=True)
     s.start()
 
-    (graph,) = ax.plot(xdata, ydata, zdata, linestyle="", marker="o", color=(0, 0, 1, 0.1))
+    (graph,) = ax.plot(
+        xdata, ydata, zdata, linestyle="", marker="o", color=(0, 0, 1, 0.1)
+    )
 
     # https://matplotlib.org/examples/animation/subplots.html
 
@@ -104,8 +115,12 @@ def run_plot(**kwargs):
 
     # NOTE: the , is critical!!!
     (dist_line,) = ax.plot(xline, yline, zline, linestyle=":", color="r", linewidth=2)
-    (ideal_line,) = ax.plot(xideal, yideal, zideal, linestyle="-", color=(1, 0, 1), linewidth=2)
-    (agent_line,) = ax.plot(xagent, yagent, zagent, linestyle="-", color=(0, 0, 1), linewidth=2)
+    (ideal_line,) = ax.plot(
+        xideal, yideal, zideal, linestyle="-", color=(1, 0, 1), linewidth=2
+    )
+    (agent_line,) = ax.plot(
+        xagent, yagent, zagent, linestyle="-", color=(0, 0, 1), linewidth=2
+    )
 
     # https://stackoverflow.com/questions/18274137/how-to-animate-text-in-matplotlib
 
@@ -185,7 +200,9 @@ def run_plot(**kwargs):
             ideal_line.set_3d_properties(yideal)
 
             # visualize agent heading
-            v_unit_agent = math_utils.unit_vector(agent_next_position - agent_current_position)
+            v_unit_agent = math_utils.unit_vector(
+                agent_next_position - agent_current_position
+            )
             agent_next_position = agent_current_position + (v_unit_agent * SCALE_UNIT)
             (xagent, yagent, zagent) = (
                 [-agent_current_position[0], -agent_next_position[0]],
@@ -204,6 +221,8 @@ def run_plot(**kwargs):
 
         return graph, dist_line, ideal_line, agent_line, dist_report
 
-    ani = matplotlib.animation.FuncAnimation(fig, update_plot, 19, interval=40, blit=True)  # NOQA
+    ani = matplotlib.animation.FuncAnimation(
+        fig, update_plot, 19, interval=40, blit=True
+    )  # NOQA
 
     plt.show()

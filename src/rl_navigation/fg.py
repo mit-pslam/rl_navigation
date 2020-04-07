@@ -177,6 +177,9 @@ class FGRenderer:
         self.pose_port = self.config.FLIGHTGOGGLES.POSE_PORT
         self.video_port = self.config.FLIGHTGOGGLES.VIDEO_PORT
 
+        if self.config.FLIGHTGOGGLES.BINARY == "":
+            raise ValueError("Please specify a valid binary path to FlightGoggles in experiment.yaml")
+
         # https://github.com/mit-fast/FlightGogglesRenderer/blob/eac129e3816ab74ee5a2c9d08c426e333afb8785/FlightGoggles/Scripts/CameraController.cs#L131-L132
         self.proc = subprocess.Popen(
             [

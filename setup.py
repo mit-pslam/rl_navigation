@@ -13,7 +13,7 @@ class BuildMesonExtenstions(build_ext):
     """A custom build extension for adding compiler-specific options."""
 
     def build_extensions(self):
-        interperter = str(sys.executable)
+        interpreter = str(sys.executable)
         install_path = pathlib.Path(".").absolute() / self.build_lib
         binding_directory = pathlib.Path("src") / "bindings"
         print(binding_directory)
@@ -28,7 +28,7 @@ class BuildMesonExtenstions(build_ext):
                 "setup",
                 build_dir,
                 str(binding_directory),
-                "-Dinterperter_path={}".format(interperter),
+                "-Dinterpreter_path={}".format(interpreter),
                 "-Dbuild_result_path={}".format(install_path),
             ], capture_output=True, encoding='utf-8'
         )
@@ -47,7 +47,7 @@ setup(
     cmdclass=dict(versioneer.get_cmdclass(), **{"build_ext": BuildMesonExtenstions}),
     description="package that contains code to train RL-policies in a FlightGoggles enviornment",
     license="TBD",
-    author="Mark Mazumder",
+    author="MIT AIIA sUAS Disaster Response",
     python_requires=">=3.7",
     package_dir={"": "src"},
     packages=["rl_navigation", "rl_navigation.subcommands"],
@@ -56,16 +56,15 @@ setup(
     install_requires=[
         "numpy",
         "stable-baselines",
-        "tensorflow<2",
+        "tensorflow-gpu<2",
         "zmq",
         "opencv-python",
         "transforms3d",
         "yacs",
     ],
-    classifiers=["Porgramming Language :: Python :: 3.7"],
+    classifiers=["Programming Language :: Python :: 3.7"],
     extras_require={
         "doc": ["sphinx", "sphinx_rtd_theme"],
         "test": ["tox"],
-        "gpu": ["tensorflow-gpu<2"],
     },
 )

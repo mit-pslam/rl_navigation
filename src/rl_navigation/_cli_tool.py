@@ -52,6 +52,13 @@ def make_train_subparser(subparsers):
 def make_plot_subparser(subparsers):
     """Make a subparser for showing training progress."""
     plot_parser = subparsers.add_parser("plot", help="visualize training")
+    plot_parser.add_argument(
+        "--configuration_file",
+        "-c",
+        default=None,
+        nargs="?",
+        help="configuration file to use to override default values.",
+    )
     plot_parser.set_defaults(func=ArgumentDispatcher(rlnav_plot.run_plot))
 
 
