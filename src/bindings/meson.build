@@ -12,12 +12,12 @@ eigen_dep = dependency('Eigen3', method: 'cmake', modules: ['Eigen3::Eigen'])
 thread_dep = dependency('threads')
 
 build_result_path = get_option('build_result_path')
-interperter_path = get_option('interperter_path')
+interpreter_path = get_option('interpreter_path')
 
 pymod = import('python')
 
-py = pymod.find_installation(interperter_path)
-install_interp = find_program(interperter_path)
+py = pymod.find_installation(interpreter_path)
+install_interp = find_program(interpreter_path)
 
 py_dep = py.dependency()
 

@@ -5,7 +5,7 @@ _C = CN()
 
 _C.FLIGHTGOGGLES = CN()
 
-_C.FLIGHTGOGGLES.BINARY = "use_find"
+_C.FLIGHTGOGGLES.BINARY = ""
 
 _C.FLIGHTGOGGLES.POSE_PORT = "10253"
 _C.FLIGHTGOGGLES.VIDEO_PORT = "10254"
@@ -14,8 +14,8 @@ _C.FLIGHTGOGGLES.VIDEO_PORT = "10254"
 _C.FLIGHTGOGGLES.PUBLISH_RATE = 1 / 20.0  # 20Hz, how frequently new poses are sent to the renderer
 
 _C.INITIAL_CONDITIONS = CN()
-_C.INITIAL_CONDITIONS.STARTING_POSES = "small_starting_set.npy"
-_C.INITIAL_CONDITIONS.IDEAL_CURVE = "data_reward_fg__unity.npy"
+_C.INITIAL_CONDITIONS.STARTING_POSES = "resources/small_starting_set.npy"
+_C.INITIAL_CONDITIONS.IDEAL_CURVE = "resources/data_reward_fg__unity.npy"
 
 _C.AGENT_MOVEMENT = CN()
 # TODO(MMAZ) add logic to support CONTINUOUS=False (currently commented out)
