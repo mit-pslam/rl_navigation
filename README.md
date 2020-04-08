@@ -20,7 +20,7 @@ pip install rl_navigation
 For developing with conda: though not recommended, you can nest a `venv` inside a conda env, e.g.,:
 
 ```bash
-conda create --name aiia python=3.7
+conda create --name aiia python=3.7 meson pkgconfig numpy
 conda activate aiia
 python -m venv ./env/
 source env/bin/activate
