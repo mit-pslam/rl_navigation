@@ -7,7 +7,7 @@ This repository contains experiments for training trajectory-following and obsta
 You can use pip and python3.7 to install this.  You may need to add the deadsnakes ppa to get python3.7.
 
 ```bash
-sudo apt install python3.7*
+sudo apt install python3.7* libeigen3-dev
 python3.7 -m venv /path/to/environment
 source /path/to/environment/bin/activate
 cd /to/some/desired/directory
