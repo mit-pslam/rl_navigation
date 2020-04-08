@@ -4,7 +4,7 @@
 # conda activate fgrl
 name: fgrl
 dependencies:
-    - python=3.6
+    - python=3.6  # TODO(nathan) test this with 3.7 at some point
     - numpy
     - matplotlib
     - jupyter

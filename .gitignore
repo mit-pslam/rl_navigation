@@ -1,5 +1,9 @@
+binary.yaml
 .vscode/
 tensorboard/
+src/bindings/subprojects/*
+!src/bindings/subprojects/sophus.wrap
+!src/bindings/subprojects/pybind11.wrap
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

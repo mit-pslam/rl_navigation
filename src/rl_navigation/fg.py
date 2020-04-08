@@ -1,3 +1,7 @@
+"""Module that handles making a gym environment for training."""
+import rl_navigation.fg_msgs as fg_msgs
+import rl_navigation.math_utilities as math_utils
+
 import atexit
 import numpy as np
 import zmq
@@ -11,7 +15,6 @@ from gym import Env as GymEnv, spaces, logger
 from scipy.spatial.transform import Rotation as R
 from scipy import interpolate
 from scipy.spatial import cKDTree
-import curses
 import transforms3d
 import sophus as sp
 
@@ -22,13 +25,14 @@ import subprocess
 import threading
 import multiprocessing
 
-import fg_msgs
-
 
 HWM = 6
 
 
+# TODO(nathan) turn into int enum
 class RenderState:
+    """Enum for what FG is doing."""
+
     NOOP = 0  # default
     WAITING = 1  # action to send on wire
     SUBMITTED = 2  # action sent on wire
@@ -36,7 +40,10 @@ class RenderState:
 
 
 class DroneState:
+    """Keep track of the drone state."""
+
     def __init__(self, config):
+        """Make the drone state."""
         # self.init_pos__unity = np.array([0, 3, 0])
         # self.init_rot__unity = np.array([0, 0, 0, 1])  # xyzw
         self.config = config
@@ -59,29 +66,35 @@ class DroneState:
         self.renderState = RenderState.NOOP
 
     def get_current_position(self):
+        """Get the current pose from FG."""
         pose = self.get_state()
         return pose[0:3, 3]
 
     def get_state(self):
+        """Get the current unity pose."""
         with self.lock:
             # TODO(MMAZ) is it ok to return a reference instead? i dont think so?
             # no guarantee it wont be changed out from under you
             return np.copy(self._T__world_from_agent__unity.matrix())
 
     def set_state(self, new_state):
+        """Set the current unity pose."""
         with self.lock:
             self._T__world_from_agent__unity = new_state
             self.renderState = RenderState.WAITING
 
     def pose_on_wire(self):
+        """Set that we've asked for a render."""
         with self.lock:
             self.renderState = RenderState.SUBMITTED
 
     def image_returned(self):
+        """Set that we've gotten an image after a request."""
         with self.lock:
             self.renderState = RenderState.NOOP
 
     def reset(self):
+        """Reset the pose of the agent."""
         # select a random initial orientation
         random_ix = np.random.randint(0, self.starting_poses.shape[0])
         random_pose = self.starting_poses[random_ix, :]
@@ -99,14 +112,14 @@ class DroneState:
             self.renderState = RenderState.WAITING
 
     def next_state_continuous(self, action):
-        """Calculates Transform based on an action representing
-           an angular velocity (nominally in radians/sec)
+        """
+        Update pose using an angular velocity (nominally in radians/sec).
 
-           TODO(MMAZ): Angular velocity change is applied instantaneously (there are
-           no vehicle dynamics currently)
+        TODO(MMAZ): Angular velocity change is applied instantaneously (there are
+        no vehicle dynamics currently)
 
-           Returns: tuple(next state, current state)
-           """
+        Returns: tuple(next state, current state)
+        """
         # TODO(MMAZ) switch from Unity's coordinate system
         # TODO(MMAZ) can be treated as radians per second, but this is not explicitly
         # tracked against a clock. ideally, should be multiplied by delta_time below in the
@@ -134,24 +147,18 @@ class DroneState:
         return new_state, self._T__world_from_agent__unity
 
     def act_discrete(self, action):
-
+        """Make discrete command choices."""
         if action == DiscreteActions.FORWARD:
             pos = np.array([0, 0, DiscreteActions.FWD_AMT])  # unity down camera
             rot = R.from_euler("xyz", [0, 0, 0])
         if action == DiscreteActions.TURN_LEFT:
             pos = np.array([0, 0, 0])
-            rot = R.from_euler(
-                "xyz", [0, -np.deg2rad(DiscreteActions.TURN_AMT), 0]
-            )  # LHS
+            rot = R.from_euler("xyz", [0, -np.deg2rad(DiscreteActions.TURN_AMT), 0])  # LHS
         if action == DiscreteActions.TURN_RIGHT:
             pos = np.array([0, 0, 0])
-            rot = R.from_euler(
-                "xyz", [0, np.deg2rad(DiscreteActions.TURN_AMT), 0]
-            )  # LHS
+            rot = R.from_euler("xyz", [0, np.deg2rad(DiscreteActions.TURN_AMT), 0])  # LHS
 
-        T_ti_tj__unity = transforms3d.affines.compose(
-            T=pos, R=rot.as_dcm(), Z=self.no_zoom
-        )
+        T_ti_tj__unity = transforms3d.affines.compose(T=pos, R=rot.as_dcm(), Z=self.no_zoom)
 
         # TODO(MMAZ) should be a safe read of _T__world_from_agent__unity, this method and
         # self.reset() are the only ones to modify state
@@ -160,12 +167,18 @@ class DroneState:
 
 
 class FGRenderer:
+    """Class that requests images from FG."""
+
     def __init__(self, config, drone_state):
+        """Make the renderer."""
         self.config = config
         atexit.register(self._close)
 
         self.pose_port = self.config.FLIGHTGOGGLES.POSE_PORT
         self.video_port = self.config.FLIGHTGOGGLES.VIDEO_PORT
+
+        if self.config.FLIGHTGOGGLES.BINARY == "":
+            raise ValueError("Please specify a valid binary path to FlightGoggles in experiment.yaml")
 
         # https://github.com/mit-fast/FlightGogglesRenderer/blob/eac129e3816ab74ee5a2c9d08c426e333afb8785/FlightGoggles/Scripts/CameraController.cs#L131-L132
         self.proc = subprocess.Popen(
@@ -185,7 +198,7 @@ class FGRenderer:
         self.upload_socket = self.context.socket(zmq.PUB)  # zeromq publisher
         self.upload_socket.setsockopt(
             zmq.SNDHWM, HWM
-        )  #  "send highwatermark" - 1 -> do not queue up messages
+        )  # "send highwatermark" - 1 -> do not queue up messages
         self.upload_socket.bind("tcp://*:%s" % self.pose_port)
 
         self.img_queue = multiprocessing.Queue()
@@ -211,8 +224,11 @@ class FGRenderer:
         download_socket = sp_context.socket(zmq.SUB)  # subscriber socket
         download_socket.setsockopt(
             zmq.RCVHWM, HWM
-        )  #  "rcv highwatermark" - 1 -> do not queue up messages
-        # download_socket.setsockopt(zmq.CONFLATE, 1)    # only receive the latest message, does not work TODO
+        )  # "rcv highwatermark" - 1 -> do not queue up messages
+
+        # only receive the latest message, does not work TODO
+        # download_socket.setsockopt(zmq.CONFLATE, 1)
+
         download_socket.setsockopt(zmq.SUBSCRIBE, b"")  # no message filter
         # socket.setsockopt(zmq.RCVTIMEO, 1000) # wait 1sec before raising EAGAIN
         download_socket.bind("tcp://*:%s" % video_port)
@@ -282,7 +298,10 @@ class FGRenderer:
         self._consumer.start()
 
 
+# TODO(nathan) switch to enum
 class DiscreteActions:
+    """Possible discrete actions."""
+
     FORWARD = 0
     TURN_LEFT = 1
     TURN_RIGHT = 2
@@ -292,7 +311,7 @@ class DiscreteActions:
 
     @classmethod
     def interpret(cls, action):
-        # verify actions from policy are within enum
+        """Verify actions from policy are within enum."""
         if action == cls.FORWARD:
             return cls.FORWARD
         if action == cls.TURN_LEFT:
@@ -303,6 +322,7 @@ class DiscreteActions:
 
     @classmethod
     def report(cls, action):
+        """Turn enum to string."""
         if action == cls.FORWARD:
             return "FORWARD"
         if action == cls.TURN_LEFT:
@@ -313,6 +333,7 @@ class DiscreteActions:
 
 # https://docs.python.org/3/howto/curses.html
 def drive(stdscr, drone_state):
+    """Allow the user to drive around in FG."""
     time.sleep(2)
     stdscr.clear()
     while True:
@@ -332,33 +353,13 @@ def drive(stdscr, drone_state):
         # stdscr.refresh()
 
 
-def unit_vector(vector):
-    """ Returns the unit vector of the vector.  
-        source: https://stackoverflow.com/a/13849249
-    """
-    return vector / np.linalg.norm(vector)
-
-
-def angle_between_vectors(v1, v2):
-    """ Returns the angle in radians between vectors 'v1' and 'v2'::
-
-            >>> angle_between((1, 0, 0), (0, 1, 0))
-            1.5707963267948966
-            >>> angle_between((1, 0, 0), (1, 0, 0))
-            0.0
-            >>> angle_between((1, 0, 0), (-1, 0, 0))
-            3.141592653589793
-        source: https://stackoverflow.com/a/13849249
-    """
-    v1_u = unit_vector(v1)
-    v2_u = unit_vector(v2)
-    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
-
-
 class FlightGogglesHeadingEnv(GymEnv):
+    """Gym environment for Flight Goggles."""
+
     max_steps = 1500
 
     def __init__(self, config):
+        """Make the gym environment."""
         self.config = config
         self.drone_state = DroneState(self.config)
         self.renderer = FGRenderer(self.config, self.drone_state)
@@ -399,7 +400,7 @@ class FlightGogglesHeadingEnv(GymEnv):
             self.report_socket = context.socket(zmq.PUB)  # zeromq publisher
             self.report_socket.setsockopt(
                 zmq.SNDHWM, 1
-            )  #  "send highwatermark" - do not queue up messages
+            )  # "send highwatermark" - do not queue up messages
             self.report_socket.bind("tcp://*:%s" % self.config.TRAINING.REPORT_PORT)
 
     def _zero_mean(self, img):
@@ -408,6 +409,7 @@ class FlightGogglesHeadingEnv(GymEnv):
         )
 
     def dist_reward_fxn(self, distance_to_loop, floor_dist_reward, ceil_dist_reward):
+        """Reward for agent based on distance traveled."""
         EXP = 2.0
         if np.isclose(distance_to_loop, 0):
             return ceil_dist_reward
@@ -418,6 +420,7 @@ class FlightGogglesHeadingEnv(GymEnv):
         return np.clip(dist_reward, a_min=floor_dist_reward, a_max=ceil_dist_reward)
 
     def clip_dist_reward(self, distance_to_loop):
+        """Adjust reward for agent to normalize."""
         # TODO(MMAZ) normalize or weight rewards to fall between -/+ 1
         # TODO(MMAZ) add these to config.py?
         mindist = 3.0
@@ -436,11 +439,7 @@ class FlightGogglesHeadingEnv(GymEnv):
         agent_next_position = next_state[0:3, 3]
 
         dd, ii = self.drone_state._tree.query(
-            (
-                agent_current_position[0],
-                agent_current_position[1],
-                agent_current_position[2],
-            )
+            (agent_current_position[0], agent_current_position[1], agent_current_position[2],)
         )
 
         # self.ii_queue.append(ii)
@@ -454,26 +453,19 @@ class FlightGogglesHeadingEnv(GymEnv):
 
         # projection of current agent position onto ideal loop
         loop_current_position = np.array(
-            [
-                self.drone_state.x_new[ii],
-                self.drone_state.y_new[ii],
-                self.drone_state.z_new[ii],
-            ]
+            [self.drone_state.x_new[ii], self.drone_state.y_new[ii], self.drone_state.z_new[ii]]
         )
-        # the +1 moves it to the next point on the parametric curve, the sampling interval mods it by 1000
+        # the +1 moves it to the next point on the parametric curve
+        # the sampling interval mods it by 1000
         jj = (ii + 1) % self.drone_state._SAMPLING_INTERVAL
         loop_next_position = np.array(
-            [
-                self.drone_state.x_new[jj],
-                self.drone_state.y_new[jj],
-                self.drone_state.z_new[jj],
-            ]
+            [self.drone_state.x_new[jj], self.drone_state.y_new[jj], self.drone_state.z_new[jj]]
         )
 
         v_agent_heading = agent_next_position - agent_current_position
         v_ideal_heading = loop_next_position - loop_current_position
 
-        angle_between = angle_between_vectors(v_agent_heading, v_ideal_heading)
+        angle_between = math_utils.angle_between_vectors(v_agent_heading, v_ideal_heading)
 
         # minimize angle between agent heading and ideal loop heading
         # TODO(MMAZ): normalize or weight rewards to be between -/+ 1
@@ -504,10 +496,8 @@ class FlightGogglesHeadingEnv(GymEnv):
         return result
 
     def step(self, action):
-        assert self.action_space.contains(action), "%r (%s) invalid" % (
-            action,
-            type(action),
-        )
+        """Step the agent forward in time."""
+        assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action),)
 
         if self.done:
             logger.warn("You are calling 'step()' after done=True")
@@ -565,6 +555,7 @@ class FlightGogglesHeadingEnv(GymEnv):
         return (zm, reward, self.done, {})
 
     def reset(self):
+        """Reset the environment."""
         self.done = False
         self.steps = 0
         if self.USE_FILTER:
@@ -578,6 +569,7 @@ class FlightGogglesHeadingEnv(GymEnv):
         return self._zero_mean(self._last_observation)
 
     def render(self, mode="rgb_array"):
+        """Save the observation somewhere for latter debugging."""
         if self.save_json:
             destination = "/home/mark/relate/fgout/"
             idx = len(self.jdata)
@@ -586,11 +578,8 @@ class FlightGogglesHeadingEnv(GymEnv):
         return cv2.cvtColor(self._last_observation, cv2.COLOR_BGR2RGB)
 
     def write_json(self):
+        """Write json to send to FG."""
         name = "data_fg.json"
         if self.save_json:
             with open(name, "w") as fh:
                 json.dump(self.jdata, fh)
-
-
-if __name__ == "__main__":
-    print("fg")
