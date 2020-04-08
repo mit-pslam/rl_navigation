@@ -11,7 +11,7 @@ sudo apt install python3.7* libeigen3-dev
 python3.7 -m venv /path/to/environment
 source /path/to/environment/bin/activate
 cd /to/some/desired/directory
-git clone git@github.mit.edu/aiia-suav-distaster-response/rl_navigation
+git clone git@github.mit.edu:aiia-suas-disaster-response/rl_navigation.git
 pip install rl_navigation
 ```
 
