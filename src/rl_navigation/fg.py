@@ -49,12 +49,20 @@ class DroneState:
         self.config = config
 
         # initial locations for the agent
-        self.starting_poses = np.load(self.config.INITIAL_CONDITIONS.STARTING_POSES)
+        pose_path = os.path.join(
+            self.config.INITIAL_CONDITIONS.RESOURCE_DIR,
+            self.config.INITIAL_CONDITIONS.STARTING_POSES,
+        )
+        self.starting_poses = np.load(pose_path)
 
         # Ideal Curve - train the agent to follow this trajectory
         self._SMOOTH = 1.5
         self._SAMPLING_INTERVAL = 1000
-        ideal__unity = np.load(self.config.INITIAL_CONDITIONS.IDEAL_CURVE)
+        ideal_curve_path = os.path.join(
+            self.config.INITIAL_CONDITIONS.RESOURCE_DIR,
+            self.config.INITIAL_CONDITIONS.IDEAL_CURVE,
+        )
+        ideal__unity = np.load(ideal_curve_path)
         tck, u = interpolate.splprep(ideal__unity.T, s=self._SMOOTH, per=1)
         u_new = np.linspace(u.min(), u.max(), self._SAMPLING_INTERVAL)
         self.x_new, self.y_new, self.z_new = interpolate.splev(u_new, tck, der=0)
@@ -153,12 +161,18 @@ class DroneState:
             rot = R.from_euler("xyz", [0, 0, 0])
         if action == DiscreteActions.TURN_LEFT:
             pos = np.array([0, 0, 0])
-            rot = R.from_euler("xyz", [0, -np.deg2rad(DiscreteActions.TURN_AMT), 0])  # LHS
+            rot = R.from_euler(
+                "xyz", [0, -np.deg2rad(DiscreteActions.TURN_AMT), 0]
+            )  # LHS
         if action == DiscreteActions.TURN_RIGHT:
             pos = np.array([0, 0, 0])
-            rot = R.from_euler("xyz", [0, np.deg2rad(DiscreteActions.TURN_AMT), 0])  # LHS
+            rot = R.from_euler(
+                "xyz", [0, np.deg2rad(DiscreteActions.TURN_AMT), 0]
+            )  # LHS
 
-        T_ti_tj__unity = transforms3d.affines.compose(T=pos, R=rot.as_dcm(), Z=self.no_zoom)
+        T_ti_tj__unity = transforms3d.affines.compose(
+            T=pos, R=rot.as_dcm(), Z=self.no_zoom
+        )
 
         # TODO(MMAZ) should be a safe read of _T__world_from_agent__unity, this method and
         # self.reset() are the only ones to modify state
@@ -178,7 +192,9 @@ class FGRenderer:
         self.video_port = self.config.FLIGHTGOGGLES.VIDEO_PORT
 
         if self.config.FLIGHTGOGGLES.BINARY == "":
-            raise ValueError("Please specify a valid binary path to FlightGoggles in experiment.yaml")
+            raise ValueError(
+                "Please specify a valid binary path to FlightGoggles in experiment.yaml"
+            )
 
         # https://github.com/mit-fast/FlightGogglesRenderer/blob/eac129e3816ab74ee5a2c9d08c426e333afb8785/FlightGoggles/Scripts/CameraController.cs#L131-L132
         self.proc = subprocess.Popen(
@@ -439,7 +455,11 @@ class FlightGogglesHeadingEnv(GymEnv):
         agent_next_position = next_state[0:3, 3]
 
         dd, ii = self.drone_state._tree.query(
-            (agent_current_position[0], agent_current_position[1], agent_current_position[2],)
+            (
+                agent_current_position[0],
+                agent_current_position[1],
+                agent_current_position[2],
+            )
         )
 
         # self.ii_queue.append(ii)
@@ -453,19 +473,29 @@ class FlightGogglesHeadingEnv(GymEnv):
 
         # projection of current agent position onto ideal loop
         loop_current_position = np.array(
-            [self.drone_state.x_new[ii], self.drone_state.y_new[ii], self.drone_state.z_new[ii]]
+            [
+                self.drone_state.x_new[ii],
+                self.drone_state.y_new[ii],
+                self.drone_state.z_new[ii],
+            ]
         )
         # the +1 moves it to the next point on the parametric curve
         # the sampling interval mods it by 1000
         jj = (ii + 1) % self.drone_state._SAMPLING_INTERVAL
         loop_next_position = np.array(
-            [self.drone_state.x_new[jj], self.drone_state.y_new[jj], self.drone_state.z_new[jj]]
+            [
+                self.drone_state.x_new[jj],
+                self.drone_state.y_new[jj],
+                self.drone_state.z_new[jj],
+            ]
         )
 
         v_agent_heading = agent_next_position - agent_current_position
         v_ideal_heading = loop_next_position - loop_current_position
 
-        angle_between = math_utils.angle_between_vectors(v_agent_heading, v_ideal_heading)
+        angle_between = math_utils.angle_between_vectors(
+            v_agent_heading, v_ideal_heading
+        )
 
         # minimize angle between agent heading and ideal loop heading
         # TODO(MMAZ): normalize or weight rewards to be between -/+ 1
@@ -497,7 +527,10 @@ class FlightGogglesHeadingEnv(GymEnv):
 
     def step(self, action):
         """Step the agent forward in time."""
-        assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action),)
+        assert self.action_space.contains(action), "%r (%s) invalid" % (
+            action,
+            type(action),
+        )
 
         if self.done:
             logger.warn("You are calling 'step()' after done=True")
@@ -524,7 +557,9 @@ class FlightGogglesHeadingEnv(GymEnv):
 
         reward = 0.0
 
-        result = self._calculate_loop_reward(next_state.matrix(), current_state.matrix())
+        result = self._calculate_loop_reward(
+            next_state.matrix(), current_state.matrix()
+        )
         reward += result["loop_reward"]
 
         self.steps += 1
