@@ -67,7 +67,13 @@ def run_plot(configuration_file: Optional[str] = None, **kwargs):
 
     _SMOOTH = 1.5
     _SAMPLING_INTERVAL = 1000
-    ideal__unity = np.load(cfg.INITIAL_CONDITIONS.IDEAL_CURVE)
+
+    ideal_curve_path = os.path.join(
+        self.config.INITIAL_CONDITIONS.RESOURCE_DIR,
+        self.config.INITIAL_CONDITIONS.IDEAL_CURVE,
+    )
+    ideal__unity = np.load(ideal_curve_path)
+
     tck, u = interpolate.splprep(ideal__unity.T, s=_SMOOTH, per=1)
     u_new = np.linspace(u.min(), u.max(), _SAMPLING_INTERVAL)
     x_new, y_new, z_new = interpolate.splev(u_new, tck, der=0)

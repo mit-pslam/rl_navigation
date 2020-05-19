@@ -1,5 +1,6 @@
 """Module to handle making a training configuration."""
 from yacs.config import CfgNode as CN
+import os
 
 _C = CN()
 
@@ -13,9 +14,12 @@ _C.FLIGHTGOGGLES.VIDEO_PORT = "10254"
 # TODO(MMAZ): increasing this rate may result in dropped frames
 _C.FLIGHTGOGGLES.PUBLISH_RATE = 1 / 20.0  # 20Hz, how frequently new poses are sent to the renderer
 
+
+src_directory = os.path.dirname(os.path.realpath(__file__))  # get directory of this file
 _C.INITIAL_CONDITIONS = CN()
-_C.INITIAL_CONDITIONS.STARTING_POSES = "resources/small_starting_set.npy"
-_C.INITIAL_CONDITIONS.IDEAL_CURVE = "resources/data_reward_fg__unity.npy"
+_C.INITIAL_CONDITIONS.RESOURCE_DIRECTORY = os.path.join(src_directory, "../../resources")
+_C.INITIAL_CONDITIONS.STARTING_POSES = "small_starting_set.npy"
+_C.INITIAL_CONDITIONS.IDEAL_CURVE = "data_reward_fg__unity.npy"
 
 _C.AGENT_MOVEMENT = CN()
 # TODO(MMAZ) add logic to support CONTINUOUS=False (currently commented out)
