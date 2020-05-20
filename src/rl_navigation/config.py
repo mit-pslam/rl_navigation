@@ -17,7 +17,7 @@ _C.FLIGHTGOGGLES.PUBLISH_RATE = 1 / 20.0  # 20Hz, how frequently new poses are s
 
 src_directory = os.path.dirname(os.path.realpath(__file__))  # get directory of this file
 _C.INITIAL_CONDITIONS = CN()
-_C.INITIAL_CONDITIONS.RESOURCE_DIRECTORY = os.path.join(src_directory, "../../resources")
+_C.INITIAL_CONDITIONS.RESOURCE_DIR = os.path.join(src_directory, "../../resources")
 _C.INITIAL_CONDITIONS.STARTING_POSES = "small_starting_set.npy"
 _C.INITIAL_CONDITIONS.IDEAL_CURVE = "data_reward_fg__unity.npy"
 
