@@ -1,5 +1,5 @@
 """Setuptools description for the rl_navigation packages."""
-from setuptools import setup, Extension
+from setuptools import setup, Extension, find_namespace_packages, find_packages
 from setuptools.command.build_ext import build_ext
 import subprocess
 import versioneer
@@ -16,10 +16,6 @@ class BuildMesonExtenstions(build_ext):
         interpreter = str(sys.executable)
         install_path = pathlib.Path(".").absolute() / self.build_lib
         binding_directory = pathlib.Path("src") / "bindings"
-        print(binding_directory)
-        print(pathlib.Path(".").absolute())
-        print(list(pathlib.Path(".").iterdir()))
-        print(list((pathlib.Path(".") / "src").iterdir()))
 
         build_dir = self.build_temp
         ret = subprocess.run(
@@ -30,15 +26,20 @@ class BuildMesonExtenstions(build_ext):
                 str(binding_directory),
                 "-Dinterpreter_path={}".format(interpreter),
                 "-Dbuild_result_path={}".format(install_path),
-            ], capture_output=True, encoding='utf-8'
+            ],
+            capture_output=True,
+            encoding="utf-8",
         )
 
         if ret.returncode != 0:
-            print("Meson out: {}".format(ret.stdout))
-            print("Meson error: {}".format(ret.stderr))
+            print("setup error: {}".format(str(ret.stdout)))
             sys.exit(1)
 
-        subprocess.run(["ninja", "install"], cwd=build_dir)
+        # TODO(someone) this fails occasionally when run a second time
+        ret = subprocess.run(["ninja", "install"], cwd=build_dir)
+        if ret.returncode != 0:
+            print("build error: {}".format(str(ret.stdout)))
+            sys.exit(1)
 
 
 setup(
@@ -50,21 +51,18 @@ setup(
     author="MIT AIIA sUAS Disaster Response",
     python_requires=">=3.7",
     package_dir={"": "src"},
-    packages=["rl_navigation", "rl_navigation.subcommands"],
-    entry_points={"console_scripts": ["rl_navigation=rl_navigation._cli_tool:main"]},
+    packages=find_namespace_packages(include=["rl_navigation_models.*"], where="src")
+    + find_packages(where="src"),
     ext_modules=[Extension("sophus", [])],
     install_requires=[
         "numpy",
-        "stable-baselines",
-        "tensorflow-gpu<2",
+        "gym",
+        "scipy",
         "zmq",
         "opencv-python",
         "transforms3d",
         "yacs",
     ],
     classifiers=["Programming Language :: Python :: 3.7"],
-    extras_require={
-        "doc": ["sphinx", "sphinx_rtd_theme"],
-        "test": ["tox"],
-    },
+    extras_require={"doc": ["sphinx", "sphinx_rtd_theme"], "test": ["tox"],},
 )

@@ -12,7 +12,7 @@ _C.FLIGHTGOGGLES.POSE_PORT = "10253"
 _C.FLIGHTGOGGLES.VIDEO_PORT = "10254"
 
 # TODO(MMAZ): increasing this rate may result in dropped frames
-_C.FLIGHTGOGGLES.PUBLISH_RATE = 1 / 20.0  # 20Hz, how frequently new poses are sent to the renderer
+_C.FLIGHTGOGGLES.PUBLISH_PERIOD = 1 / 20.0  # 20Hz, how frequently new poses are sent to the renderer
 
 
 src_directory = os.path.dirname(os.path.realpath(__file__))  # get directory of this file
@@ -35,6 +35,11 @@ _C.TRAINING.HYP_GAMMA = 0.9
 _C.TRAINING.HYP_MINIBATCHES = 1
 # to observe agent movement and rewards in realtime (see plot_train_fg.py)
 _C.TRAINING.REPORT_PORT = 5556
+
+_C.POINTNAV = CN()
+_C.POINTNAV.MAXIMUM_EPISODE_LENGTH = 200
+# close enough to the goal state
+_C.POINTNAV.MINIMUM_REWARD_SUCCESS = 0.9
 
 
 def get_cfg_defaults():
