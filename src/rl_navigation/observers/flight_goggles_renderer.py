@@ -134,7 +134,7 @@ class FlightGogglesRenderer(Observer):
                     self.config["camera_model"][0]["channels"],
                 ),
             ).astype(np.uint8),
-            "hasCameraCollision": False,  # TODO: Determine how we can get collision field
+            "hasCameraCollision": self.client.isInCollision(),
         }
         return observation
 
