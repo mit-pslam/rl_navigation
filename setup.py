@@ -18,6 +18,10 @@ class BuildMesonExtenstions(build_ext):
         binding_directory = pathlib.Path("src") / "bindings"
 
         build_dir = self.build_temp
+
+        # Removing folder prevents ninja below from dying, if folder exists
+        subprocess.run(["rm", "-r", build_dir])
+
         ret = subprocess.run(
             [
                 "meson",
@@ -35,7 +39,6 @@ class BuildMesonExtenstions(build_ext):
             print("setup error: {}".format(str(ret.stdout)))
             sys.exit(1)
 
-        # TODO(someone) this fails occasionally when run a second time
         ret = subprocess.run(["ninja", "install"], cwd=build_dir)
         if ret.returncode != 0:
             print("build error: {}".format(str(ret.stdout)))
@@ -62,7 +65,12 @@ setup(
         "opencv-python",
         "transforms3d",
         "yacs",
+        "flightgoggles@git+ssh://git@github.mit.edu/aiia-suas-disaster-response/FlightGoggles-Python.git@python3.7#egg=flightgoggles",
     ],
     classifiers=["Programming Language :: Python :: 3.7"],
-    extras_require={"doc": ["sphinx", "sphinx_rtd_theme"], "test": ["tox"],},
+    extras_require={
+        "doc": ["sphinx", "sphinx_rtd_theme"],
+        "test": ["tox"],
+        "hover": "stable-baselines@git+https://git@github.com/hill-a/stable-baselines.git@v2.10.1#egg=stable-baselines",  # NOTE: uses pip's wheel doesn't seem to check for or install tensorflow/tensorflow-gpu
+    },
 )
