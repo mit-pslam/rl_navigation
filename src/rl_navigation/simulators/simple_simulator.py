@@ -64,7 +64,7 @@ class SimpleSimulator(Simulator):
         action = self.action_queue.popleft()
 
         T_world_from_agent = sp.SE3(
-            R.from_quat(state.ownship.orientation).as_dcm(), state.ownship.position
+            R.from_quat(state.ownship.orientation).as_matrix(), state.ownship.position
         )
 
         velocity = np.concatenate([action.linear, action.angular])
@@ -82,7 +82,7 @@ class SimpleSimulator(Simulator):
         new_state = T_world_from_agent * sp.SE3.exp(velocity * delta_time)
 
         position = new_state.translation()  # extract translation
-        orientation = R.from_dcm(new_state.rotation_matrix()).as_quat()  # xyzw order
+        orientation = R.from_matrix(new_state.rotation_matrix()).as_quat()  # xyzw order
 
         return (
             State(

@@ -1,5 +1,5 @@
 project('rl_navigation_bindings', 'cpp', version: '0.0.1',
-  default_options : ['cpp_std=c++17', 'werror=true', 'warning_level=2', 'b_ndebug=if-release'])
+  default_options : ['cpp_std=c++17', 'warning_level=2', 'b_ndebug=if-release'])
 
 pybind11_project = subproject('pybind11')
 pybind11_dep = pybind11_project.get_variable('pybind11_dep')

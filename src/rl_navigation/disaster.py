@@ -1,8 +1,9 @@
-from gym import Env as GymEnv, spaces, logger, error
-import numpy as np
-from typing import Any, Callable, Dict, Optional, Tuple, Union, List
 from collections import namedtuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+import numpy as np
+from gym import Env as GymEnv
+from gym import error, logger, spaces
 
 Pose = namedtuple(
     "Pose",
@@ -15,6 +16,16 @@ Twist = namedtuple(
     "Twist",
     ["linear", "angular"],
     defaults=(np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 0.0])),
+)
+
+Twist2D = namedtuple(
+    "Twist2d", ["linear", "angular"], defaults=(np.array([0]), np.array([0]))
+)
+
+Twist2DWithDeclare = namedtuple(
+    "Twist2DWithDeclare",
+    ["linear", "angular", "reached"],
+    defaults=(Twist2D(), np.array([0])),
 )
 
 
@@ -38,14 +49,24 @@ class Simulator:
             A tuple that includes:
                 - The next world state after applying action.
                 - Drone observations (may be empty).
-                
+
         """
 
         raise NotImplementedError
 
+    def reset(self, state: State) -> None:
+        """Reset simulator, if needed.
+
+        Parameters
+        ----------
+        state: State
+            State of new episode.
+        """
+        pass
+
 
 class Observer:
-    """Abstract class for defining drone observers. """
+    """Abstract class for defining drone observers."""
 
     def observe(
         self, state: State, observation: Optional[Dict[str, Any]] = dict()
@@ -200,7 +221,7 @@ class DisasterEnv(GymEnv):
         ----------
         simulator: Simulator
             Simulator to be used for the gym environment.
-        
+
         observer_chain: List[Observer]
             List of observers for the gym environment.
 
@@ -297,7 +318,7 @@ class DisasterEnv(GymEnv):
         -------
         Dict[str, Any]
             The observation dictionary.
-            
+
         """
         (self.state, observation) = self.simulator.step(self.state, action)
         return self._observe(self.state, observation)
@@ -321,7 +342,7 @@ class DisasterEnv(GymEnv):
 
         next_state: State
             The next (or current) gym state.
-        
+
         observation: Dict[str, Any]
             The observation dictionary.
 
@@ -332,7 +353,7 @@ class DisasterEnv(GymEnv):
                 1. amount of reward returned after previous action,
                 2. whether the episode has ended, in which case further step() calls will return undefined results, and
                 3. auxiliary diagnostic information (helpful for debugging, and sometimes learning)
-            
+
         """
         raise NotImplementedError
 
@@ -354,7 +375,7 @@ class DisasterEnv(GymEnv):
                 2. amount of reward returned after previous action,
                 3. whether the episode has ended, in which case further step() calls will return undefined results, and
                 4. auxiliary diagnostic information (helpful for debugging, and sometimes learning)
-            
+
         """
         assert self.action_space.contains(action), "%r (%s) invalid" % (
             action,
@@ -382,7 +403,7 @@ class DisasterEnv(GymEnv):
         -------
         Tuple[State, Dict[str, Any]]
             Fields correspond to:
-                1. the initial state, and 
+                1. the initial state, and
                 2. the initial observation.
 
         """
@@ -398,6 +419,7 @@ class DisasterEnv(GymEnv):
 
         """
         (self.state, observation) = self.disaster_reset()
+        self.done = False
         return observation
 
     def render(self, mode: str = "rgb_array"):
@@ -407,7 +429,7 @@ class DisasterEnv(GymEnv):
 
 class GoalDisasterEnv(DisasterEnv):
     """Convenience class modified from https://github.com/openai/gym/blob/master/gym/core.py#L156.
-    
+
     A goal-based environment. It functions just as any regular OpenAI Gym environment but it
     imposes a required structure on the observation_space. More concretely, the observation
     space is required to contain at least three elements, namely `observation`, `desired_goal`, and

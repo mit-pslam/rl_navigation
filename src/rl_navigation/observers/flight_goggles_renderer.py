@@ -7,6 +7,7 @@ import time
 import json
 import yaml
 import signal
+from yacs.config import CfgNode as CN
 
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 from collections import namedtuple
@@ -14,9 +15,23 @@ from collections import namedtuple
 import threading, queue
 
 from rl_navigation.disaster import Observer, State
+from rl_navigation.utils.flight_goggles_cfgs import (
+    cfg_v3_defaults,
+    cfg_v3_depth_defaults,
+    dump,
+)
 
 from flightgoggles_client import FlightGogglesClient as fg_client
 import flightgoggles
+
+from scipy.spatial.transform import Rotation as R
+import sophus as sp
+
+
+T_ned_from_enu = sp.SE3(
+    np.array([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+)
+T_enu_from_ned = T_ned_from_enu.inverse()
 
 
 class FlightGogglesRenderer(Observer):
@@ -28,9 +43,10 @@ class FlightGogglesRenderer(Observer):
         pose_port: int = 10253,
         video_port: int = 10254,
         state: State = State(),
-        config_file: str = os.path.join(
-            flightgoggles.__path__[0], "..", "config", "FlightGogglesClient.yaml"
-        ),
+        config: CN = cfg_v3_depth_defaults(),
+        screen_quality: int = 2,
+        connection_timeout_seconds: int = 9999,  # FG v3.2
+        env: Union[Dict, None] = None,
     ):
         """Initialize.
 
@@ -48,13 +64,15 @@ class FlightGogglesRenderer(Observer):
         state: State = State()
             Initial state for initial drone placement in environment.
 
-        config_file: str
-            Path to FlightGoggles config file.
+        config: CfgNode
+            FG configuration. See rl_navigation/utils/flightgoggles_cfg.py.
+
+        env: Union[Dict, None]
+            Environment specific parameters.
 
         Returns
         -------
         FlightGogglesRenderer
-
         """
         # Launch flightgoggles
         self.proc = subprocess.Popen(
@@ -64,9 +82,16 @@ class FlightGogglesRenderer(Observer):
                 str(pose_port),
                 "-output-port",
                 str(video_port),
+                "-screen-quality",
+                str(screen_quality),
+                "-connection-timeout-seconds",
+                str(connection_timeout_seconds),
             ],
             cwd=os.path.dirname(flight_goggles_path),
+            env=env,
         )
+
+        config_file = dump(config)
 
         with open(config_file, "r") as stream:
             self.config = yaml.safe_load(stream)
@@ -76,12 +101,14 @@ class FlightGogglesRenderer(Observer):
             input_port=str(pose_port),
             output_port=str(video_port),
         )
-        self.client.addCamera(
-            self.config["camera_model"][0]["ID"],
-            np.int(self.config["camera_model"][0]["channels"]),
-            np.bool(self.config["camera_model"][0]["isDepth"]),
-            np.int(self.config["camera_model"][0]["outputIndex"]),
-        )
+
+        for i, camera in enumerate(self.config["camera_model"].values()):
+            self.client.addCamera(
+                camera["ID"],
+                np.int(i),
+                np.int(camera["outputShaderType"]),
+                bool(camera["hasCollisionCheck"]),
+            )
 
         atexit.register(self.close)
 
@@ -105,18 +132,18 @@ class FlightGogglesRenderer(Observer):
 
         """
         signal.signal(signal.SIGALRM, self.__timeout_handler__)
+        p_ned, q_ned = self.toFGClientInputs(state)
         while True:
             try:  # TODO: Why is this necessary????
                 try:
                     signal.alarm(1)
 
-                    orientation = [
-                        state.ownship.orientation[x] for x in [-1, 0, 1, 2]
-                    ]  # put w at front
-                    self.client.setCameraPose(state.ownship.position, orientation, 0)
+                    for i in range(len(self.config["camera_model"].values())):
+                        self.client.setCameraPose(p_ned, q_ned, i)
+
                     self.client.setStateTime(self.client.getTimestamp())
                     self.client.requestRender()
-                    imgs = self.client.getImage()
+                    imgs, isInCollision, _, _ = self.client.getImage()
 
                 except Exception:
                     continue
@@ -126,17 +153,64 @@ class FlightGogglesRenderer(Observer):
             break
 
         observation["fg"] = {
-            "image": np.reshape(
-                imgs[self.config["camera_model"][0]["ID"]],
-                (
-                    self.config["state"]["camHeight"],
-                    self.config["state"]["camWidth"],
-                    self.config["camera_model"][0]["channels"],
-                ),
-            ).astype(np.uint8),
-            "hasCameraCollision": self.client.isInCollision(),
+            "hasCameraCollision": isInCollision,
         }
+        for camera in self.config["camera_model"].values():
+            if camera["ID"] == "RGB":
+                observation["fg"]["image"] = np.reshape(
+                    imgs[camera["ID"]],
+                    (
+                        self.config["state"]["camHeight"],
+                        self.config["state"]["camWidth"],
+                        camera["channels"],
+                    ),
+                ).astype(np.uint8)[
+                    :, :, ::-1
+                ]  # Switch BGR to RGB (supposedly)
+            elif camera["ID"] == "Depth":
+                depth = (
+                    np.reshape(
+                        imgs[camera["ID"]],
+                        (
+                            self.config["state"]["camHeight"],
+                            self.config["state"]["camWidth"],
+                        ),
+                    ).astype(float)
+                    / 65535
+                )  # 2**16-1, note: multiply by 100 for actual depth (in m's)
+
+                # If no depth is detected, within 100 m, then 0 is reported.
+                # We move anything at 0 out to the farthest distance possible (1.0)
+                observation["fg"]["depth"] = np.where(depth == 0.0, 1.0, depth)
+            else:
+                pass
+
         return observation
+
+    def toFGClientInputs(self, state: State):
+        """Converts state to flight goggles client inputs, which expects North-East-Down
+
+        Parameters
+        ----------
+        state: State
+            The world state.
+
+        Returns
+        -------
+        Tuple[]
+            Position (as vector) and orientation (as quaternion)
+
+        """
+        T_enu_from_agent = sp.SE3(
+            R.from_quat(state.ownship.orientation).as_matrix(), state.ownship.position
+        )
+        T_ned_from_agent = T_ned_from_enu * T_enu_from_agent * T_enu_from_ned
+
+        p_ned = T_ned_from_agent.translation()
+        q = R.from_matrix(T_ned_from_agent.rotation_matrix()).as_quat()
+        q_ned = [q[x] for x in [-1, 0, 1, 2]]  # put w at front
+
+        return (p_ned, q_ned)
 
     def close(self):
         """Callback to close flight goggles."""
