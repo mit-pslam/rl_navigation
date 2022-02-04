@@ -1,20 +1,11 @@
 ## Running Policies in ROS
 
-![AI](https://media.kasperskycontenthub.com/wp-content/uploads/sites/67/2016/09/10032917/artificial-intelligence.jpg)
-
-You may be thinking, *Why must I be surrounded by frickin' idiots?*
-We don't know that answer to that question.
-But, we can help you run the latest and greatest RL policies.
-
 We assume you are familiar with installation instructions for [this package](../../../README.md), as well as [rl_navigation_ros](https://github.mit.edu/aiia-suas-disaster-response/rl_navigation_ros).
-
 
 
 ## Stable Baselines Basic Hover Policy
 
-When installing this package in your python virtual environment (i.e., `venv`), consider using `pip install -e rl_navigation[hover,ros]`.
-This will install [stable-baselines](https://stable-baselines.readthedocs.io/en/master/), and (attempt to) install tensorflow correctly.
-You may need to clean up the install.
+First, you'll need to install [stable-baselines](https://stable-baselines.readthedocs.io/en/master/).
 
 In order to run a policy, you'll need to download the file that specifies the model.
 Then, you'll need to generate a configuration file.

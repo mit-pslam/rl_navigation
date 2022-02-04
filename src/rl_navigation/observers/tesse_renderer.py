@@ -84,7 +84,6 @@ class TesseRenderer(TesseGym, Observer, Resetter):
         """
         self.env.send(reposition_message(state))  # update position in tesse
 
-        # TODO: check whether this messes up vehicle position
         self.env.send(StepWithTransform())  # allow collision to register
 
         result = self._data_request(DataRequest(metadata=True, cameras=self.cameras))

@@ -134,7 +134,7 @@ class FlightGogglesRenderer(Observer):
         signal.signal(signal.SIGALRM, self.__timeout_handler__)
         p_ned, q_ned = self.toFGClientInputs(state)
         while True:
-            try:  # TODO: Why is this necessary????
+            try:  # Note: this multi-try loop is a pattern borrowed from FG python client code
                 try:
                     signal.alarm(1)
 

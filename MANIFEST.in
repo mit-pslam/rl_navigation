@@ -5,3 +5,4 @@ include src/bindings/meson_options.txt
 include src/bindings/subprojects/*.wrap
 include src/bindings/sophus/meson.build
 include src/bindings/sophus/sophus_bindings.cpp
+include src/rl_navigation/utils/*.csv

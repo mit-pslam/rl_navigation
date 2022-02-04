@@ -1,4 +1,6 @@
 from fast_depth_estimation import FastDepthEstimator as FDE
+# Note: fast_depth_estimation can be installed with an optional argument (i.e., pip install -e rl_navigation[fast_depth])
+
 import numpy as np
 
 from rl_navigation.disaster import Observer, State

@@ -6,7 +6,6 @@ from ray.rllib.env import BaseEnv
 from ray.rllib.env.env_context import EnvContext
 from ray.rllib.evaluation import MultiAgentEpisode, RolloutWorker
 from ray.rllib.policy import Policy
-from rl_navigation.observers.fast_depth_estimation import FastDepthEstimator
 from rl_navigation.observers.goal_point import GoalPoint
 from rl_navigation.observers.search import FlightGogglesSearchRenderer
 from rl_navigation.rllib.utils import (
@@ -74,6 +73,9 @@ class SearchWrapperEnv(SearchEnv):
             assert (
                 "fast_depth_ckpt_file" in config
             ), 'config["fast_depth_ckpt_file"] needs to be specified.'
+
+            from rl_navigation.observers.fast_depth_estimation import FastDepthEstimator
+            
             observer_chain.append(FastDepthEstimator(config["fast_depth_ckpt_file"]))
 
         # observation mapper
