@@ -58,7 +58,7 @@ setup(
     ext_modules=[Extension("sophus", [])],
     install_requires=[
         "numpy<1.20",
-        "gym",
+        "gym<=0.21.0",
         "scipy>=1.4.0",
         "zmq",
         "opencv-python",
