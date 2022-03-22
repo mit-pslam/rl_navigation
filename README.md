@@ -11,10 +11,8 @@ This package uses the FlightGoggles Python interface. It will be installed autom
 
 First, install a few items with `apt`:
 ```bash
-sudo apt install libeigen3-dev libzmqpp-dev
+sudo apt install cmake libeigen3-dev libopencv-dev libzmqpp-dev
 ```
-
-Next, install [OpenCV](https://docs.opencv.org/trunk/d7/d9f/tutorial_linux_install.html).
 
 **[Optional]** Install the [vulkan device chooser layer](https://github.com/aejsmith/vkdevicechooser) if you anticipate training on a machine with multiple GPUs and want to use all of them.
 FlightGoggles uses [vulkan](https://developer.nvidia.com/vulkan), which has limited Mult-GPU support by default (see [this particular issue](https://www.reddit.com/r/linux_gaming/comments/c3gk5v/force_specific_gpu_in_vulkan_applicationsgames/) and a [solution](https://github.com/aejsmith/vkdevicechooser) for more details).
