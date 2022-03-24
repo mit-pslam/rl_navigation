@@ -61,7 +61,7 @@ setup(
         "gym<=0.21.0",
         "scipy>=1.4.0",
         "zmq",
-        "opencv-python",
+        "opencv-python==4.1.2.30",
         "transforms3d",
         "yacs",
         "matplotlib",
