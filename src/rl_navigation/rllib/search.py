@@ -42,6 +42,7 @@ class SearchWrapperEnv(SearchEnv):
         rank = config.vector_index + config.worker_index * 10
         end_on_false_positive = config.get("end_on_false_positive", True)
         enfoce_target_in_fov = config.get("enforce_target_in_fov", True)
+        resolution = config.get("resolution", "standard")
 
         # resetters
         if renderer == "tesse":
@@ -58,6 +59,18 @@ class SearchWrapperEnv(SearchEnv):
         if renderer == "flight_goggles":
             env = get_flightgoggles_env_args(config)
             fg_config = get_fg_config(flight_goggles_scene)
+
+            # Check resolution parameter and change camera dimensions, if appropriate
+            # Used for better speed on lower(normal)-performance compute
+            if resolution == "minimal":
+                fg_config.defrost()
+                fg_config.state.camWidth = 256
+                fg_config.state.camHeight = 192
+            elif resolution != "standard":
+                raise ValueError(
+                    "resolution value of {} not supported".format(resolution)
+                )
+
             observer_chain.append(
                 FlightGogglesSearchRenderer(
                     config["flight_goggles_path"],
@@ -75,7 +88,7 @@ class SearchWrapperEnv(SearchEnv):
             ), 'config["fast_depth_ckpt_file"] needs to be specified.'
 
             from rl_navigation.observers.fast_depth_estimation import FastDepthEstimator
-            
+
             observer_chain.append(FastDepthEstimator(config["fast_depth_ckpt_file"]))
 
         # observation mapper
