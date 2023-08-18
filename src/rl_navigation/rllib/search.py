@@ -16,7 +16,7 @@ from rl_navigation.rllib.utils import (
     get_simulator,
 )
 from rl_navigation.tasks.search import SearchEnv, SearchObserver
-from rl_navigation.utils.flight_goggles_cfgs import get_fg_config
+from rl_navigation.utils.flight_goggles_cfgs import *
 
 
 class SearchWrapperEnv(SearchEnv):
@@ -35,6 +35,7 @@ class SearchWrapperEnv(SearchEnv):
         change_twist_linear_weight = config.get("change_twist_linear_weight", 0.0)
         change_twist_angular_weight = config.get("change_twist_angular_weight", 0.0)
         base_port = config.get("base_port", 8000)
+        base_port_offset = config.get("base_port_offset", 0)   # Set to non-zero for evaluation configuration setup
         renderer = config.get("renderer", "flight_goggles")
         flight_goggles_scene = config.get("flight_goggles_scene", "ground_floor_car")
         fields = config.get("fields", [])
@@ -42,7 +43,8 @@ class SearchWrapperEnv(SearchEnv):
         rank = config.vector_index + config.worker_index * 10
         end_on_false_positive = config.get("end_on_false_positive", True)
         enfoce_target_in_fov = config.get("enforce_target_in_fov", True)
-        resolution = config.get("resolution", "standard")
+        camWidth = config.get("camWidth", 1024)
+        camHeight = config.get("camHeight", 768)
 
         # resetters
         if renderer == "tesse":
@@ -58,24 +60,27 @@ class SearchWrapperEnv(SearchEnv):
         ]
         if renderer == "flight_goggles":
             env = get_flightgoggles_env_args(config)
-            fg_config = get_fg_config(flight_goggles_scene)
 
-            # Check resolution parameter and change camera dimensions, if appropriate
-            # Used for better speed on lower(normal)-performance compute
-            if resolution == "minimal":
-                fg_config.defrost()
-                fg_config.state.camWidth = 256
-                fg_config.state.camHeight = 192
-            elif resolution != "standard":
-                raise ValueError(
-                    "resolution value of {} not supported".format(resolution)
-                )
+            cameras = []
+            if "image" in fields:
+                cameras.append(CameraShader.RGB)
+            if "depth" in fields:
+                cameras.append(CameraShader.DepthMultiChannel)
+            if "grayscale" in fields:
+                cameras.append(CameraShader.grayscale)
+
+            fg_config = scene(
+                scene=Scene.Stata_GroundFloor,
+                camWidth=camWidth,
+                camHeight=camHeight,
+                cameras=cameras,
+            )
 
             observer_chain.append(
                 FlightGogglesSearchRenderer(
                     config["flight_goggles_path"],
-                    pose_port=base_port + 2 * rank,
-                    video_port=base_port + 1 + 2 * rank,
+                    pose_port=base_port + 2 * rank + base_port_offset,
+                    video_port=base_port + 1 + 2 * rank + base_port_offset,
                     config=fg_config,
                     env=env,
                 )
@@ -96,6 +101,7 @@ class SearchWrapperEnv(SearchEnv):
             position_mode=config.get("position_mode", "compact"),
             renderer=renderer,
             fields=fields,
+            shape=(camHeight, camWidth),
             use_fast_depth_estimate=config.get("use_fast_depth_estimate", False),
         )
 

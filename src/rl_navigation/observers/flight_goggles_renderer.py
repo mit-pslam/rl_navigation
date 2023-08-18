@@ -167,7 +167,7 @@ class FlightGogglesRenderer(Observer):
                 ).astype(np.uint8)[
                     :, :, ::-1
                 ]  # Switch BGR to RGB (supposedly)
-            elif camera["ID"] == "Depth":
+            elif camera["ID"] == "Depth" or camera["ID"] == "DepthMultiChannel":
                 depth = (
                     np.reshape(
                         imgs[camera["ID"]],
@@ -175,13 +175,27 @@ class FlightGogglesRenderer(Observer):
                             self.config["state"]["camHeight"],
                             self.config["state"]["camWidth"],
                         ),
-                    ).astype(float)
+                    ).astype(np.float32)
                     / 65535
                 )  # 2**16-1, note: multiply by 100 for actual depth (in m's)
 
                 # If no depth is detected, within 100 m, then 0 is reported.
                 # We move anything at 0 out to the farthest distance possible (1.0)
                 observation["fg"]["depth"] = np.where(depth == 0.0, 1.0, depth)
+            elif camera["ID"] == "grayscale":
+                observation["fg"]["grayscale"] = np.expand_dims(
+                    np.reshape(
+                        imgs[camera["ID"]],
+                        (
+                            self.config["state"]["camHeight"],
+                            self.config["state"]["camWidth"],
+                            camera["channels"],
+                        ),
+                    ).astype(np.uint8)[
+                        :, :, 0
+                    ],  # only need to get one channel for this
+                    2,
+                )
             else:
                 pass
 

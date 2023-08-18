@@ -63,7 +63,7 @@ class PointnavObserver(ObservationMapper):
             renderer = "fg"
 
         for field in fields:
-            assert field in ["image", "depth"]
+            assert field in ["image", "depth", "grayscale"]
 
         self.position_mode = position_mode
         self.renderer = renderer
@@ -191,7 +191,7 @@ def get_image_observation(
             obs[field] = img
 
         if img.dtype == np.uint8:
-            obs[field] = img / np.float32(255.0)
+            obs[field] = obs[field] / np.float32(255.0)
 
     return obs
 
@@ -219,14 +219,21 @@ def get_image_observation_space(
             out["image"] = spaces.Box(
                 low=0,
                 high=1,
-                dtype=np.float64,
+                dtype=np.float32,
                 shape=(img_shape[0], img_shape[1], 3),
             )
         elif field == "depth":
             out["depth"] = spaces.Box(
                 low=0,
                 high=1,
-                dtype=np.float64,
+                dtype=np.float32,
+                shape=(img_shape[0], img_shape[1], 1),
+            )
+        elif field == "grayscale":
+            out["grayscale"] = spaces.Box(
+                low=0,
+                high=1,
+                dtype=np.float32,
                 shape=(img_shape[0], img_shape[1], 1),
             )
     return out
@@ -352,6 +359,9 @@ class GoalPointEnv(DisasterEnv):
         out = []
         if "image" in obs:
             out.append(obs["image"])
+
+        if "grayscale" in obs:
+            out.append(obs["grayscale"])
 
         if "depth" in obs:
             out.append(depth_to_image(obs["depth"]))

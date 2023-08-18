@@ -37,7 +37,7 @@ class SearchObserver(ObservationMapper):
             renderer = "fg"
 
         for field in fields:
-            assert field in ["image", "depth"]
+            assert field in ["image", "depth", "grayscale"]
 
         self.position_mode = position_mode
         self.renderer = renderer

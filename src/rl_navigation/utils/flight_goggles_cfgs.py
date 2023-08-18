@@ -2,141 +2,163 @@ from yacs.config import CfgNode as CN
 import re
 import tempfile
 import os
-
-_C = CN()
-
-_C.state = CN()
-_C.state.sceneFilename = "Abandoned_Factory_Morning"
-_C.state.camWidth = 1024
-_C.state.camHeight = 768
-_C.state.camFOV = 70.0
-_C.state.camDepthScale = 0.20
-
-_C.state.map = CN()
-_C.state.map.filename = "Stata_GroundFloor.png"
-_C.state.map.x_min = -31.0
-_C.state.map.x_max = 78.5
-_C.state.map.y_min = -68.1
-_C.state.map.y_max = 78.8
-_C.state.map.map_margin = 0
-_C.state.map.map_scale = 5
-
-_C.renderer = CN()
-
-_C.renderer["0"] = CN()
-_C.renderer["0"].inputPort = "10253"
-_C.renderer["0"].outputPort = "10254"
-
-_C.camera_model = CN()
-
-_C.camera_model["0"] = CN()
-_C.camera_model["0"].ID = "RGB"
-_C.camera_model["0"].channels = 3
-_C.camera_model["0"].isDepth = False
-_C.camera_model["0"].outputIndex = 0
-_C.camera_model["0"].hasCollisionCheck = True
-_C.camera_model["0"].doesLandmarkVisCheck = False
-_C.camera_model["0"].initialPose = [0, 0, 0, 1, 0, 0, 0]
-_C.camera_model["0"].renderer = 0
-_C.camera_model["0"].freq = 30
-_C.camera_model["0"].outputShaderType = -1
-
-_C.vehicle_model = CN()
-
-_C.vehicle_model.uav1 = CN()
-_C.vehicle_model.uav1.type = "uav"
-_C.vehicle_model.uav1.initialPose = [50.0, -49.0, -2.0, 0, 0, 0, 1]
-_C.vehicle_model.uav1.imu_freq = 200
-
-_C.vehicle_model.uav1.cameraInfo = CN()
-
-_C.vehicle_model.uav1.cameraInfo.RGB = CN()
-_C.vehicle_model.uav1.cameraInfo.RGB.relativePose = [0, 0, 0, 1, 0, 0, 0]
-_C.vehicle_model.uav1.cameraInfo.RGB.freq = 30
-
-_C.objects = CN()
-_C.objects["0"] = CN()
-_C.objects["0"].ID = "gate1"
-_C.objects["0"].prefabID = "gate"
-_C.objects["0"].size_x = 100
-_C.objects["0"].size_y = 100
-_C.objects["0"].size_z = 100
-
-_C_v2 = _C.clone()
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from enum import Enum
 
 
-def cfg_v2_defaults():
-    return _C_v2.clone()
+class Scene(Enum):
+    Abandoned_Factory_Morning = "Abandoned_Factory_Morning"
+    Stata_Basement = "Stata_Basement"
+    Stata_GroundFloor = "Stata_GroundFloor"
+
+    def sceneFilename(self) -> str:
+        return self.value
 
 
-# Flight Goggles Version 3
-_C_v3 = _C.clone()
-_C_v3.state.sceneFilename = "Stata_GroundFloor"
+class CameraShader(Enum):
+    RGB = ("RGB", -1, 3, False)
+    InstanceID = ("InstanceID", 0, 1, False)
+    SemanticID = ("SemanticID", 1, 1, False)
+    DepthCompressed = ("DepthCompressed", 2, 1, True)
+    DepthMultiChannel = ("DepthMultiChannel", 3, 1, True)
+    SurfaceNormals = ("SurfaceNormals", 4, 3, False)  #  3 channels?
+    grayscale = ("grayscale", 5, 3, False)
+    opticalFlow = ("opticalFlow", 6, 3, False)  # 3 channels?
+
+    def ID(self) -> str:
+        return self.value[0]
+
+    def outputShaderType(self) -> int:
+        return self.value[1]
+
+    def channels(self) -> int:
+        return self.value[2]
+
+    def isDepth(self) -> bool:
+        return self.value[3]
+
+
+class Object(Enum):
+    Gate = "gate"
+    Blackeagle = "Blackeagle"
+    Square_Gate = "Square_Gate"
+    Circular_Gate = "Circular_Gate"
+
+    def prefabID(self) -> str:
+        return self.value
+
+
+def scene(
+    scene: Scene = Scene.Stata_Basement,
+    initialPose: List[float] = [50.0, -49.0, -2.0, 0, 0, 0, 1],
+    imu_freq: float = 200,
+    cam_freq: float = 30,
+    camWidth: int = 1024,
+    camHeight: int = 768,
+    camFOV: float = 70.0,
+    camDepthScale: float = 0.20,
+    cameras: List[CameraShader] = [CameraShader.RGB, CameraShader.DepthMultiChannel],
+    cameraInitialPose: List[float] = [0, 0, 0, 1, 0, 0, 0],
+    objects: List[Tuple[Object, str, float, float, float]] = [
+        (Object.Gate, "gate1", 100, 100, 100)
+    ],
+    inputPort: str = "10253",
+    outputPort: str = "10254",
+) -> CN:
+
+    C = CN()
+
+    C.state = CN()
+    C.state.sceneFilename = scene.sceneFilename()
+    C.state.camWidth = camWidth
+    C.state.camHeight = camHeight
+    C.state.camFOV = camFOV
+    C.state.camDepthScale = camDepthScale
+
+    # # Setup objects, which may not be needed
+    C.objects = CN()
+    for i, object in enumerate(objects):
+        C.objects[str(i)] = CN()
+        C.objects[str(i)].prefabID = object[0].prefabID()
+        C.objects[str(i)].ID = object[1]
+        C.objects[str(i)].size_x = object[2]
+        C.objects[str(i)].size_y = object[3]
+        C.objects[str(i)].size_z = object[4]
+
+    # Setup renderer
+    C.renderer = CN()
+
+    C.renderer["0"] = CN()
+    C.renderer["0"].inputPort = str(inputPort)
+    C.renderer["0"].outputPort = str(outputPort)
+
+    # Setup vehicle model
+    C.vehicle_model = CN()
+    C.vehicle_model.uav1 = CN()
+    C.vehicle_model.uav1.type = "uav"
+    C.vehicle_model.uav1.initialPose = initialPose
+    C.vehicle_model.uav1.imu_freq = imu_freq
+
+    C.vehicle_model.uav1.cameraInfo = CN()
+
+    # Setup camera model
+    C.camera_model = CN()
+
+    for i, camera in enumerate(cameras):
+        C.camera_model[str(i)] = CN()
+
+        C.camera_model[str(i)].ID = camera.ID()
+        C.camera_model[str(i)].channels = camera.channels()
+        C.camera_model[str(i)].isDepth = camera.isDepth()
+        C.camera_model[str(i)].outputIndex = i
+        C.camera_model[str(i)].hasCollisionCheck = (
+            i == 0
+        )  # Only setup collisions with the 0th camera
+        C.camera_model[str(i)].doesLandmarkVisCheck = False
+        C.camera_model[
+            str(i)
+        ].initialPose = (
+            cameraInitialPose.copy()
+        )  # .copy() needed to prevent weirdness in *.cfg
+        C.camera_model[str(i)].renderer = 0
+        C.camera_model[str(i)].freq = cam_freq
+        C.camera_model[str(i)].outputShaderType = camera.outputShaderType()
+
+        C.vehicle_model.uav1.cameraInfo[camera.ID()] = CN()
+        C.vehicle_model.uav1.cameraInfo[
+            camera.ID()
+        ].relativePose = (
+            cameraInitialPose.copy()
+        )  # .copy() needed to prevent weirdness in *.cfg
+        C.vehicle_model.uav1.cameraInfo[camera.ID()].freq = cam_freq
+
+    return C
 
 
 def cfg_v3_defaults():
-    return _C_v3.clone()
-
-
-# Flight Goggles Version 3 with depth
-_C_v3_depth = _C.clone()
-_C_v3_depth.state.sceneFilename = "Stata_GroundFloor"
-
-_C_v3_depth.camera_model["1"] = CN()
-_C_v3_depth.camera_model["1"].ID = "Depth"
-_C_v3_depth.camera_model["1"].channels = 1
-_C_v3_depth.camera_model["1"].isDepth = True
-_C_v3_depth.camera_model["1"].outputIndex = 1
-_C_v3_depth.camera_model["1"].hasCollisionCheck = False
-_C_v3_depth.camera_model["1"].doesLandmarkVisCheck = False
-_C_v3_depth.camera_model["1"].initialPose = [0, 0, 0, 1, 0, 0, 0]
-_C_v3_depth.camera_model["1"].renderer = 0
-_C_v3_depth.camera_model["1"].freq = 30
-_C_v3_depth.camera_model["1"].outputShaderType = 3
-
-_C_v3_depth.vehicle_model.uav1.cameraInfo.Depth = CN()
-_C_v3_depth.vehicle_model.uav1.cameraInfo.Depth.relativePose = [0, 0, 0, 1, 0, 0, 0]
-_C_v3_depth.vehicle_model.uav1.cameraInfo.Depth.freq = 30
+    return scene(scene=Scene.Stata_GroundFloor, cameras=[CameraShader.RGB])
 
 
 def cfg_v3_depth_defaults():
-    return _C_v3_depth.clone()
-
-
-# Flight Goggles version 3 in Basement
-_C_v3_basement = _C_v3.clone()
-_C_v3_basement.state.sceneFilename = "Stata_Basement"
+    return scene(
+        scene=Scene.Stata_GroundFloor,
+        cameras=[CameraShader.RGB, CameraShader.DepthMultiChannel],
+    )
 
 
 def cfg_v3_basement_defaults():
-    return _C_v3_basement.clone()
-
-
-# Flight Goggles version 3 in Basement with Depth
-_C_v3_depth_basement = _C_v3_depth.clone()
-_C_v3_depth_basement.state.sceneFilename = "Stata_Basement"
+    return scene(scene=Scene.Stata_Basement, cameras=[CameraShader.RGB])
 
 
 def cfg_v3_depth_basement_defaults():
-    return _C_v3_depth_basement.clone()
-
-
-# Flight Goggles version 3 in Stata first floor with depth
-_C_v3_depth_ground_floor = _C_v3_depth.clone()
-_C_v3_depth_ground_floor.state.sceneFilename = "Stata_GroundFloor"
+    return scene(
+        scene=Scene.Stata_Basement,
+        cameras=[CameraShader.RGB, CameraShader.DepthMultiChannel],
+    )
 
 
 def cfg_v3_depth_ground_floor_defaults():
-    return _C_v3_depth_ground_floor.clone()
-
-
-# Freeze all of the configs so a user doesn't modify directly
-_C_v2.freeze()
-_C_v3.freeze()
-_C_v3_depth.freeze()
-_C_v3_basement.freeze()
-_C_v3_depth_basement.freeze()
-_C_v3_depth_ground_floor.freeze()
+    return cfg_v3_depth_defaults()
 
 
 def dump(cfg: CN, filename: str = None):

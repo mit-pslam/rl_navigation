@@ -59,6 +59,7 @@ setup(
     install_requires=[
         "numpy<1.20",
         "gym<=0.21.0",
+        "importlib-metadata<5.0",  # required to support gym properly
         "scipy>=1.4.0",
         "zmq",
         "opencv-python==4.1.2.30",
@@ -77,7 +78,7 @@ setup(
     extras_require={
         "doc": ["sphinx", "sphinx_rtd_theme"],
         "test": ["tox"],
-        "rllib": ["ray[default,rllib]==1.3.0", "aiohttp<3.8.0", "aioredis==1.3.1"],
+        "rllib": ["ray[default,rllib]==1.13.0", "aiohttp<3.8.0", "aioredis==1.3.1"],
         "fast_depth": [
             "fast-depth-estimation@git+ssh://git@github.mit.edu/aiia-suas-disaster-response/fast-depth-estimation.git@master#egg=fast-depth-estimation",
         ],
