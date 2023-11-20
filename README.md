@@ -96,3 +96,6 @@ See details [here](https://github.com/mit-aera/FlightGoggles/wiki/Running-Flight
 
 You can run policies in [ROS](https://www.ros.org/) using [rl_navigation_ros](https://github.mit.edu/aiia-suas-disaster-response/rl_navigation_ros) (assuming you have access to this repository).
 A trained policy can be ran as described [here](src/rl_navigation_models/policies/README.md).
+
+## Acknowledgement
+Research was sponsored by the United States Air Force Research Laboratory and the Department of the Air Force Artificial Intelligence Accelerator and was accomplished under Cooperative Agreement Number FA8750-19-2-1000. The views and conclusions contained in this document are those of the authors and should not be interpreted as representing the official policies, either expressed or implied, of the Department of the Air Force or the U.S. Government. The U.S. Government is authorized to reproduce and distribute reprints for Government purposes notwithstanding any copyright notation herein.
