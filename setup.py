@@ -67,12 +67,12 @@ setup(
         "yacs",
         "matplotlib",
         "tesse-gym@git+https://git@github.com/MIT-TESSE/tesse-gym.git@master#egg=tesse-gym",
-        "flightgoggles@git+ssh://git@github.mit.edu/aiia-suas-disaster-response/pyFlightGoggles.git@opencv4-compatible#egg=flightgoggles",
+        "flightgoggles@git+https://git@github.com/mit-pslam/pyFlightGoggles.git@opencv4-compatible#egg=flightgoggles",
     ],
     
     dependency_links=[
         "git+https://git@github.com/MIT-TESSE/tesse-gym.git@master#egg=tesse-gym",
-        "git+ssh://git@github.mit.edu/aiia-suas-disaster-response/pyFlightGoggles.git@opencv4-compatible#egg=flightgoggles",
+        "git+https://git@github.com/mit-pslam/pyFlightGoggles.git@opencv4-compatible#egg=flightgoggles",
     ],
     classifiers=["Programming Language :: Python :: 3.7"],
     extras_require={

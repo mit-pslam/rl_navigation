@@ -53,12 +53,12 @@ It is important that you install a version compatible with CUDA on your machine.
 
 For basic usage, install this repository with `pip`:
 ```bash
-pip install "rl_navigation[rllib] @ git+ssh://git@github.mit.edu/aiia-suas-disaster-response/rl_navigation.git"
+pip install "rl_navigation[rllib] @ git+ssh://git@github.com/mit-pslam/rl_navigation.git"
 ```
 
 If cloning to develop, certainly use something like:
 ```bash
-git clone git@github.mit.edu:aiia-suas-disaster-response/rl_navigation.git
+git clone git@github.com/mit-pslam/rl_navigation.git
 pip install -e rl_navigation[rllib]
 ```
 
